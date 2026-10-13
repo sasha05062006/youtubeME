@@ -203,11 +203,44 @@ def qa_video(ffmpeg: str, ffprobe: str, video: Path, settings: dict, manifest: d
     return report
 
 
+
+def choose_from_menu(title: str, options: list[tuple[str, str]], default: str) -> str:
+    print("\n" + title)
+    for i, (key, label) in enumerate(options, 1):
+        suffix = " (по умолчанию)" if key == default else ""
+        print(f"  {i}. {label}{suffix}")
+    while True:
+        answer = input(f"Выбор [1-{len(options)}], Enter — вариант по умолчанию: ").strip()
+        if not answer:
+            return default
+        if answer.isdigit() and 1 <= int(answer) <= len(options):
+            return options[int(answer) - 1][0]
+        print("Введите номер из списка.")
+
+
+def run_wizard(args):
+    story_options = [(s["id"], s["topic"] + " — " + s["title"]) for s in STORIES]
+    args.story = args.story or choose_from_menu("1/3. Выбери тему и сюжет:", story_options, STORIES[0]["id"])
+    args.character = args.character or choose_from_menu("2/3. Выбери персонажа:", list(CHARACTERS.items()), "robot")
+    args.voice = args.voice or choose_from_menu("3/3. Выбери голос:", list(VOICES.items()), "irina")
+    settings = load_settings()
+    settings.setdefault("audio", {})["enabled"] = args.voice != "silent"
+    settings["audio"]["voice_name"] = args.voice
+    if args.voice in ("irina", "denis"):
+        model_name = "ru_RU-irina-medium.onnx" if args.voice == "irina" else "ru_RU-denis-medium.onnx"
+        settings["audio"]["piper_model"] = settings["audio"].get("piper_model") or str(ROOT / "models" / model_name)
+    SETTINGS_PATH.write_text(json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8")
+    return args
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate an original procedural 3D vertical short.")
     parser.add_argument("--seed", type=int, default=None, help="Repeatable story/scene seed.")
     parser.add_argument("--story", choices=[s["id"] for s in STORIES], help="Use a specific bundled story.")
     parser.add_argument("--list-stories", action="store_true", help="List bundled story templates and exit.")
+    parser.add_argument("--character", choices=list(CHARACTERS), help="Main character.")
+    parser.add_argument("--voice", choices=list(VOICES), help="Narration voice.")
+    parser.add_argument("--no-menu", action="store_true", help="Run without interactive prompts.")
     args = parser.parse_args()
 
     if args.list_stories:
@@ -216,7 +249,14 @@ def main() -> int:
         return 0
 
     load_dotenv()
+    if not args.no_menu and sys.stdin.isatty():
+        args = run_wizard(args)
+    args.story = args.story or STORIES[0]["id"]
+    args.character = args.character or "robot"
+    args.voice = args.voice or "irina"
     settings = load_settings()
+    settings.setdefault("audio", {})["enabled"] = args.voice != "silent"
+    settings["audio"]["voice_name"] = args.voice
     blender = executable_from_setting("BLENDER_EXE", "", "blender")
     ffmpeg = executable_from_setting("FFMPEG_EXE", "", "ffmpeg")
     ffprobe = executable_from_setting("FFPROBE_EXE", "", "ffprobe")
@@ -231,7 +271,11 @@ def main() -> int:
     if seed == 0:
         seed = int(time.time_ns() % 2_000_000_000)
     rng = random.Random(seed)
-    story = next((s for s in STORIES if s["id"] == args.story), None) if args.story else rng.choice(STORIES)
+    story = next((s for s in STORIES if s["id"] == args.story), None)
+    if story is None:
+        print("Unknown story selection.")
+        return 2
+    story["character"] = args.character
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(seed)
     work_dir = ROOT / "output" / "work" / run_id
     frames_dir = work_dir / "frames"
@@ -273,7 +317,7 @@ def main() -> int:
     candidate = work_dir / "final.mp4"
     audio_path = work_dir / "narration.wav"
     audio_cfg = settings.get("audio", {})
-    narration_ok = audio_cfg.get("enabled", True) and audio_cfg.get("windows_speech", True) and offline_narration(story["narration"], audio_path, work_dir, audio_cfg)
+    narration_ok = audio_cfg.get("enabled", True) and offline_narration(story["narration"], audio_path, work_dir, audio_cfg)
     if narration_ok:
         mux_log = work_dir / "mux.log"
         mux = run_command([
@@ -296,6 +340,9 @@ def main() -> int:
         "story_id": story["id"],
         "title": story["title"],
         "narration_text": story["narration"],
+        "character": args.character,
+        "voice": args.voice,
+        "topic": story.get("topic", ""),
         "seed": seed,
         "settings": settings,
         "blender_executable": blender,
@@ -307,7 +354,7 @@ def main() -> int:
     }
     report = qa_video(ffmpeg, ffprobe, candidate, settings, manifest) if settings.get("qa", {}).get("enabled", True) else {"passed": True, "checks": {"qa_disabled": True}, "errors": []}
     manifest["qa"] = report
-    manifest["narration_note"] = "Offline Windows speech generated." if narration_ok else "No offline speech was available; output is silent."
+    manifest["narration_note"] = "Offline narration generated." if narration_ok else "No configured offline voice was available; output is silent."
     target_dir = ready_dir if report["passed"] else quarantine_dir
     final_path = target_dir / f"{run_id}_{story['id']}.mp4"
     shutil.move(str(candidate), str(final_path))
@@ -316,8 +363,8 @@ def main() -> int:
     print(f"QA: {'PASS' if report['passed'] else 'FAIL'}")
     print(f"Video: {final_path.relative_to(ROOT)}")
     print(f"Manifest: {manifest_path.relative_to(ROOT)}")
-    if not narration_ok:
-        print("Note: generated video has no narration; check Windows Speech availability.")
+    if not narration_ok and args.voice != "silent":
+        print("Note: voice model/executable not found. Configure Piper or select an installed Windows voice.")
     if not report["passed"]:
         for error in report.get("errors", []):
             print("QA ERROR:", error)
