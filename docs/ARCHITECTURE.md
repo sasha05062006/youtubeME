@@ -1,25 +1,50 @@
 # Architecture and realistic limits
 
-## Pipeline
+## Current implementation
 
-1. **Story planner** chooses a bundled short English micro-story and a deterministic seed. No API calls or credentials are needed.
-2. **3D scene builder** invokes Blender in background mode and builds the character, environment, props, lights, camera, and animated keyframes from Python.
-3. **Frame encoder** uses FFmpeg to encode the rendered frame sequence into a vertical H.264 MP4.
-4. **Offline narration** uses Windows SAPI/System.Speech when available. The pipeline can still produce a silent video if speech is unavailable; it records that condition in the manifest.
-5. **Quality gate** checks the video stream, orientation, duration, file size, and audio peak when narration exists. Failed runs are quarantined rather than placed in the ready folder.
-6. **Manifest** records the story, seed, generated assets, software versions, and QA results.
+The repository currently implements an early procedural short pipeline:
 
-## Why procedural 3D first
+1. **Template story selector** chooses one of a small set of bundled Russian micro-stories. It does not yet turn an arbitrary user brief into a screenplay.
+2. **3D scene builder** invokes Blender in background mode and builds a single stylized character, props, lighting, camera, and simple keyframes from Python.
+3. **Frame encoder** uses FFmpeg to encode rendered frames into a vertical H.264 MP4.
+4. **Basic offline narration** uses Piper when installed, or Windows SAPI as a fallback. It creates one narration track; it does not yet cast distinct voices for dialogue between multiple characters.
+5. **Quality gate** checks the video stream, orientation, duration, file size, and basic audio peak when audio exists.
+6. **Manifest** records story, seed, software settings, and QA results.
 
-The target machine has 4 GB RAM, a Celeron N3350, and no discrete GPU. Modern text-to-video models such as Wan require much more memory and typically a capable GPU; they are not a dependable fully-local option on this hardware. A procedural Blender scene is genuinely 3D and can be generated offline, although rendering may be slow. The MVP prioritizes repeatability and zero API cost over photorealistic generative video.
+This current implementation is a foundation, not the finished autonomous cartoon studio.
+
+## Target architecture
+
+The product target is described in [AUTONOMOUS_CARTOON_STUDIO_MVP.md](AUTONOMOUS_CARTOON_STUDIO_MVP.md). The target pipeline is:
+
+1. **Brief parser and screenplay planner:** convert a natural-language brief into a validated screenplay with cast, stable character IDs, scenes, dialogue, acting cues, camera direction, and duration budgets.
+2. **Asset and continuity manager:** create/reuse consistent 3D characters, props, environments, and visual references across shots.
+3. **Line-level voice renderer:** generate each dialogue line separately, assign a voice profile per character, and preserve acting cues where supported. Narrator and character dialogue must be distinct.
+4. **Sound designer and timeline mixer:** place synchronized sound effects, scene ambience, and music; duck music under dialogue; normalize loudness and avoid clipping.
+5. **Multi-scene 3D renderer:** stage multiple characters, animate actions, cut between cameras, and render each scene. Jobs should be resumable and cache completed stages.
+6. **Final assembler and QA:** combine video and audio timelines, verify duration and synchronization, detect missing dialogue and audio, inspect black/silent sections, and write a provenance/license manifest.
+
+## Hardware and quality trade-offs
+
+The target machine has 4 GB RAM, a Celeron N3350, and no discrete GPU. Modern text-to-video models and large local language models are not dependable on this hardware. Procedural Blender scenes can run locally, but longer multi-character films may render very slowly. Start with low-resolution previews and render one scene at a time.
+
+High-quality neural voices, script generation, and generative 3D assets may require a separate optional backend. A free tier can have quotas, require an account or payment method, change without notice, or send prompts/audio to a third party. Such backends must be explicit opt-ins, with their price limits, data handling, and licenses documented. Do not claim unlimited, professional-quality generation from a fully offline setup unless it has been tested.
+
+## Audio quality requirements
+
+- Do not use one voice for every speaking character.
+- Generate speech line by line and associate each line with a character ID and timing.
+- Keep Piper and Windows SAPI as fallback voices, not as a guarantee of human-sounding acting.
+- Mix dialogue, ambience, effects, and music on a shared timeline.
+- Duck music under speech, normalize final loudness, prevent clipping, and verify synchronization.
+- Track the origin and license of each music/effect/voice asset. Never silently download arbitrary media.
 
 ## Free and licensing rules
 
-- The default visual assets are created procedurally at render time.
-- No stock clips, music, external images, or web-scraped assets are included.
-- Do not add third-party models, fonts, sounds, or voice models without recording their license in the asset manifest.
-- Uploading and scheduling are disabled; a human reviews each MP4 before posting.
+- Procedural assets generated by project code may be used by default, but third-party models and tools have their own licenses.
+- Do not add third-party models, fonts, sounds, or voice models without recording their source and license.
+- Uploading and scheduling remain disabled; a human reviews each MP4 before posting.
 
 ## Resource tuning
 
-Start with 360x640, 12 FPS, and 12 seconds. If renders are too slow, lower FPS to 8 and duration to 8 seconds. Increase resolution only after a successful test run. Keep the Windows page file system-managed and close memory-heavy applications while rendering.
+The existing prototype defaults to 360x640 and 12 FPS. Keep preview resolution and scene duration low on the target laptop. For longer cartoons, render scene-by-scene, cache successful stages, and resume after failures rather than rerendering the whole project.
