@@ -12,12 +12,12 @@ A free, local-first Windows pipeline for generating original vertical 3D cartoon
 
 ## Quick start (Windows)
 
-1. Install a recent stable Blender build from https://www.blender.org/download/ and make sure `blender.exe` is on PATH, or set `BLENDER_EXE` in `.env` to its full path.
+1. Install a recent stable Blender build from https://www.blender.org/download/ and make sure `blender.exe` is on PATH, or set `BLENDER_EXE` in a `.env` file to its full path.
 2. Install FFmpeg and ensure `ffmpeg.exe` and `ffprobe.exe` are on PATH.
 3. Run `setup.bat` once, then `run.bat`.
 4. Finished MP4s appear in `output/ready/`; failed QA runs are moved to `output/quarantine/` with a report.
 
-The setup script checks prerequisites and never installs paid tools or downloads AI model weights. Narration uses offline Windows Speech when available, with an optional local Piper executable supported by configuration.
+The setup script checks prerequisites and never installs paid tools or downloads AI model weights. Narration uses offline Windows Speech when available, with an optional local Piper executable and model supported by `audio.piper_executable` / `audio.piper_model` (or `PIPER_EXE` / `PIPER_MODEL` environment variables).
 
 ## Current MVP behavior
 
