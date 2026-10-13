@@ -66,11 +66,10 @@ def ensure_audio_assets(screenplay: dict[str, Any], auto_download: bool) -> dict
     assets_root = ROOT / "assets" / "audio"
     needed = collect_asset_ids(screenplay)
     lookup = {asset["name"]: asset for asset in ASSETS}
-    missing_known = [name for name in sorted(needed) if name in lookup and not any(
-        (assets_root / folder / f"{name}.{ext}").is_file()
-        for folder in ("sfx", "ambience", "music")
-        for ext in ("wav", "flac", "mp3", "ogg")
-    )]
+    missing_known = [
+        name for name in sorted(needed)
+        if name in lookup and not (assets_root / lookup[name]["folder"] / lookup[name]["filename"]).is_file()
+    ]
     unknown = sorted(needed - set(lookup))
     if unknown:
         raise CartoonJobError(
