@@ -139,12 +139,13 @@ def build_filter_graph(clips: list[dict[str, Any]], duration: float) -> str:
         )
         filters.append(
             f"[voicebus][ducked]amix=inputs=2:duration=longest:dropout_transition=1,"
-            f"atrim=duration={duration},loudnorm=I=-16:TP=-1.5:LRA=11[out]"
+            f"apad=whole_dur={duration},atrim=duration={duration},"
+            f"loudnorm=I=-16:TP=-1.5:LRA=11[out]"
         )
     else:
         final_label = "voicebus" if voice_labels else "bgbus"
         filters.append(
-            f"[{final_label}]atrim=duration={duration},"
+            f"[{final_label}]apad=whole_dur={duration},atrim=duration={duration},"
             f"loudnorm=I=-16:TP=-1.5:LRA=11[out]"
         )
     return ";".join(filters)
