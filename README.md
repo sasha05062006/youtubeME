@@ -48,7 +48,7 @@ The one-click flow is integrated in the repository, but must still be tested end
 4. Run `run.bat` to generate one of the currently bundled template shorts.
 5. Check `output/ready/` and the accompanying manifest. Failed QA outputs go to `output/quarantine/`.
 
-To create a screenplay from a natural-language brief through a **local OpenAI-compatible model endpoint**, run `python scripts/screenplay_planner.py --prompt "Детский мультфильм про слонёнка и трёх друзей, которые ищут волшебный колокольчик" --duration 180 --output output\screenplay.json`. By default it checks `http://127.0.0.1:31415/v1`; override with `--base-url` or `YOUTUBEME_LLM_BASE_URL`. This does not call a paid API. It requires a compatible local model server to be running.
+To create a screenplay from a natural-language brief through a **local OpenAI-compatible model endpoint**, run `python scripts/screenplay_planner.py --prompt "Детский мультфильм про слонёнка и трёх друзей, которые ищут волшебный колокольчик" --duration 180 --output output\screenplay.json`. By default it checks `http://127.0.0.1:31415/v1`; override with `--base-url` or `YOUTUBEME_LLM_BASE_URL`; set `YOUTUBEME_LLM_MODEL` if model discovery is unavailable. This does not call a paid API. It requires a compatible local model server to be running.
 
 For an audio-only test, validate the included sample with `python scripts/screenplay.py examples/elephant_friends.screenplay.json`, then run `install_audio_assets.bat` and `python scripts/audio_timeline.py examples/elephant_friends.screenplay.json` after installing the Piper voice models. The one-click launcher invokes the screenplay planner, Blender renderer, audio mixer, and final video assembly automatically.
 
