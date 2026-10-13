@@ -226,10 +226,13 @@ def choose_from_menu(title: str, options: list[tuple[str, str]], default: str) -
 
 def run_wizard(args):
     story_options = [(s["id"], s["topic"] + " — " + s["title"]) for s in STORIES]
-    args.story = args.story or choose_from_menu("1/3. Выбери тему и сюжет:", story_options, STORIES[0]["id"])
-    args.character = args.character or choose_from_menu("2/3. Выбери персонажа:", list(CHARACTERS.items()), "robot")
-    args.voice = args.voice or choose_from_menu("3/3. Выбери голос:", list(VOICES.items()), "irina")
+    args.story = args.story or choose_from_menu("1/4. Выбери тему и сюжет:", story_options, STORIES[0]["id"])
+    args.character = args.character or choose_from_menu("2/4. Выбери персонажа:", list(CHARACTERS.items()), "robot")
+    args.voice = args.voice or choose_from_menu("3/4. Выбери голос:", list(VOICES.items()), "irina")
+    duration_options = [("12", "12 секунд — короткий ролик"), ("18", "18 секунд — рекомендуется"), ("25", "25 секунд — более подробная история")]
+    duration = choose_from_menu("4/4. Выбери длительность:", duration_options, "18")
     settings = load_settings()
+    settings["video"]["duration_seconds"] = int(duration)
     settings.setdefault("audio", {})["enabled"] = args.voice != "silent"
     settings["audio"]["voice_name"] = args.voice
     if args.voice in ("irina", "denis"):
