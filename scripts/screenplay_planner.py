@@ -139,7 +139,7 @@ def build_offline_screenplay(brief: str, duration: int) -> dict[str, Any]:
             music["start_seconds"] = min(round(float(music.get("start_seconds", 0)) * ratio, 2), max(0, new_duration - 1))
 
     cleaned = " ".join(brief.strip().split())
-    title = re.split(r"[.!?\\n]", cleaned, maxsplit=1)[0].strip(" «»\"'")
+    title = re.split(r"[.!?\n]", cleaned, maxsplit=1)[0].strip(" «»\"'")
     if title:
         screenplay["title"] = title[:90]
     screenplay["target_duration_seconds"] = duration
