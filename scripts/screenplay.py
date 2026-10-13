@@ -127,6 +127,8 @@ def validate_screenplay(data: dict[str, Any]) -> list[str]:
             cue_duration = cue.get("duration_seconds", duration)
             if not isinstance(cue_duration, (int, float)) or isinstance(cue_duration, bool) or cue_duration <= 0:
                 errors.append(f"{cue_prefix}.duration_seconds must be positive")
+            elif isinstance(start, (int, float)) and not isinstance(start, bool) and start >= 0 and start + cue_duration > duration:
+                errors.append(f"{cue_prefix} extends beyond the scene duration")
             gain = cue.get("gain_db", -22)
             if not isinstance(gain, (int, float)) or isinstance(gain, bool):
                 errors.append(f"{cue_prefix}.gain_db must be numeric")
