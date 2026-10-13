@@ -36,7 +36,9 @@ The project must still add a screenplay planner, connect the audio timeline to t
 4. Run `run.bat` to generate one of the currently bundled template shorts.
 5. Check `output/ready/` and the accompanying manifest. Failed QA outputs go to `output/quarantine/`.
 
-For an audio-only screenplay test, run `python scripts/screenplay.py examples/elephant_friends.screenplay.json` to validate the included sample, then run `python scripts/audio_timeline.py examples/elephant_friends.screenplay.json` after installing the listed voice models and adding the referenced licensed sound files. This separate audio stage is not yet integrated with the video render.
+To create a screenplay from a natural-language brief through a **local OpenAI-compatible model endpoint**, run `python scripts/screenplay_planner.py --prompt "Детский мультфильм про слонёнка и трёх друзей, которые ищут волшебный колокольчик" --duration 180 --output output\screenplay.json`. By default it checks `http://127.0.0.1:31415/v1`; override with `--base-url` or `YOUTUBEME_LLM_BASE_URL`. This does not call a paid API. It requires a compatible local model server to be running.
+
+Validate the result with `python scripts/screenplay.py output\screenplay.json`. For an audio-only screenplay test, validate the included sample with `python scripts/screenplay.py examples/elephant_friends.screenplay.json`, then run `python scripts/audio_timeline.py examples/elephant_friends.screenplay.json` after installing the listed voice models and adding the referenced licensed sound files. These are separate pipeline stages and are not yet integrated into one-click video generation. This separate audio stage is not yet integrated with the video render.
 
 The current prototype uses conservative render settings for a low-resource Windows laptop. A three-minute multi-scene cartoon is substantially heavier and has not been verified on the target 4 GB RAM / Celeron-class machine. Use short test renders while building out the full pipeline.
 
