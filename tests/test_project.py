@@ -91,6 +91,23 @@ class ProjectConfigurationTests(unittest.TestCase):
         self.assertEqual(len(sample["cast"]), 4)
         self.assertEqual(validate_screenplay(sample), [])
 
+    def test_local_screenplay_planner_validates_model_output(self):
+        import sys
+        from unittest.mock import patch
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import screenplay_planner
+
+        sample = json.loads((ROOT / "examples" / "elephant_friends.screenplay.json").read_text(encoding="utf-8"))
+        responses = [
+            {"data": [{"id": "test-local-model"}]},
+            {"choices": [{"message": {"content": json.dumps(sample, ensure_ascii=False)}}]},
+        ]
+        with patch.object(screenplay_planner, "http_json", side_effect=responses):
+            result = screenplay_planner.plan_screenplay("Слонёнок и три друга", 180)
+        self.assertEqual(result["target_duration_seconds"], 180)
+        self.assertEqual(result["generation"]["model"], "test-local-model")
+        self.assertEqual(len(result["cast"]), 4)
+
     def test_no_paid_api_key_dependency(self):
         source = (ROOT / "scripts" / "generate.py").read_text(encoding="utf-8").lower()
         self.assertNotIn("openai_api_key", source)
