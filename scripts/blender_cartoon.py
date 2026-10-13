@@ -257,8 +257,12 @@ def render_screenplay(screenplay_path: Path, frames_root: Path):
         settings.render.filepath = str(scene_dir / "frame_")
         build_environment(settings, scene_data, frame_end, index)
         cast = screenplay["cast"]
-        if len(cast) <= 3:
-            positions = [(-1.25 + i * 1.25, -0.15) for i in range(len(cast))]
+        if len(cast) == 1:
+            positions = [(0.0, -0.15)]
+        elif len(cast) == 2:
+            positions = [(-0.72, -0.15), (0.72, -0.15)]
+        elif len(cast) == 3:
+            positions = [(-1.25, -0.15), (0.0, -0.15), (1.25, -0.15)]
         elif len(cast) == 4:
             positions = [(-1.05, -0.25), (1.05, -0.25), (-1.05, 1.0), (1.05, 1.0)]
         else:
