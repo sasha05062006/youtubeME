@@ -1,7 +1,7 @@
 {
   "video": {
     "duration_seconds": 12,
-    "language": "en",
+    "language": "ru",
     "fps": 12,
     "seed": 0
   },
@@ -14,15 +14,16 @@
   "audio": {
     "enabled": true,
     "windows_speech": true,
-    "piper_executable": "",
-    "piper_model": "",
+    "piper_executable": "tools/piper/piper.exe",
+    "piper_model": "models/ru_RU-irina-medium.onnx",
     "target_lufs": -16,
-    "true_peak_db": -1.5
+    "true_peak_db": -1.5,
+    "voice_name": "irina"
   },
   "qa": {
     "enabled": true,
     "min_file_size_bytes": 20000,
-    "duration_tolerance_seconds": 2.0,
+    "duration_tolerance_seconds": 2,
     "require_vertical_video": true,
     "require_manifest": true,
     "max_volume_db": -0.1
