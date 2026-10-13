@@ -17,7 +17,7 @@ if errorlevel 1 (
 )
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -LiteralPath 'tools\piper\piper.zip' -DestinationPath 'tools\piper\extract' -Force"
 if errorlevel 1 exit /b 1
-for /r "tools\piper\extract" %%F in (piper.exe) do copy /Y "%%F" "tools\piper\piper.exe" >nul
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$exe = Get-ChildItem 'tools\piper\extract' -Filter piper.exe -Recurse | Select-Object -First 1; if (-not $exe) { exit 1 }; Copy-Item (Join-Path $exe.DirectoryName '*') 'tools\piper' -Recurse -Force"
 if not exist "tools\piper\piper.exe" (
   echo Could not find piper.exe in the downloaded archive.
   exit /b 1
