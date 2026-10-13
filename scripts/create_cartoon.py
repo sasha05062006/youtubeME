@@ -297,7 +297,7 @@ def main() -> int:
             return 5
         print("Готово. Прослушай и просмотри мультфильм перед публикацией.")
         return 0
-    except (CartoonJobError, OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+    except (RuntimeError, OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
         error_path = work_dir / "error.txt"
         error_path.write_text(str(exc), encoding="utf-8")
         print(f"Создание мультфильма остановлено: {exc}", file=sys.stderr)
