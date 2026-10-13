@@ -148,7 +148,7 @@ class ProjectConfigurationTests(unittest.TestCase):
             {"choices": [{"message": {"content": json.dumps(sample, ensure_ascii=False)}}]},
         ]
         with patch.object(screenplay_planner, "http_json", side_effect=responses):
-            result = screenplay_planner.plan_screenplay("Слонёнок и три друга", 180)
+            result = screenplay_planner.plan_screenplay("Слонёнок и три друга", 180, use_llm=True)
         self.assertEqual(result["target_duration_seconds"], 180)
         self.assertEqual(result["generation"]["model"], "test-local-model")
         self.assertEqual(len(result["cast"]), 4)
