@@ -81,6 +81,15 @@ class ProjectConfigurationTests(unittest.TestCase):
         self.assertEqual(offsets[("dialogue", "fox")], 11)
         self.assertEqual(offsets[("ambience", "forest")], 10)
 
+    def test_multi_scene_cartoon_pipeline_is_wired(self):
+        blender = (ROOT / "scripts" / "blender_cartoon.py").read_text(encoding="utf-8")
+        orchestrator = (ROOT / "scripts" / "create_cartoon.py").read_text(encoding="utf-8")
+        self.assertIn('enumerate(screenplay["scenes"], 1)', blender)
+        self.assertIn('animal_kind(character)', blender)
+        self.assertIn("render_audio_timeline", orchestrator)
+        self.assertIn("plan_screenplay", orchestrator)
+        self.assertIn("concat", orchestrator)
+
     def test_cc0_audio_installer_covers_example_assets(self):
         import sys
         sys.path.insert(0, str(ROOT / "scripts"))
