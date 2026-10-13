@@ -81,6 +81,16 @@ class ProjectConfigurationTests(unittest.TestCase):
         self.assertEqual(offsets[("dialogue", "fox")], 11)
         self.assertEqual(offsets[("ambience", "forest")], 10)
 
+    def test_included_three_minute_screenplay_is_valid(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from screenplay import validate_screenplay
+
+        sample = json.loads((ROOT / "examples" / "elephant_friends.screenplay.json").read_text(encoding="utf-8"))
+        self.assertEqual(sample["target_duration_seconds"], 180)
+        self.assertEqual(len(sample["cast"]), 4)
+        self.assertEqual(validate_screenplay(sample), [])
+
     def test_no_paid_api_key_dependency(self):
         source = (ROOT / "scripts" / "generate.py").read_text(encoding="utf-8").lower()
         self.assertNotIn("openai_api_key", source)
