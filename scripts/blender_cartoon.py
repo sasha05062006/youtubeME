@@ -245,9 +245,9 @@ def render_screenplay(screenplay_path: Path, frames_root: Path):
     except Exception:
         pass
     frames_root.mkdir(parents=True, exist_ok=True)
-    mats = {"dark": mat("Character dark details", (0.06, 0.07, 0.10)), "eye": mat("Eye highlights", (0.95, 0.98, 1.0), emission=0.15)}
     for index, scene_data in enumerate(screenplay["scenes"], 1):
         clear_scene(settings)
+        mats = {"dark": mat("Character dark details", (0.06, 0.07, 0.10)), "eye": mat("Eye highlights", (0.95, 0.98, 1.0), emission=0.15)}
         duration = float(scene_data["duration_seconds"])
         frame_end = max(2, int(round(duration * settings.render.fps)))
         settings.frame_start = 1
