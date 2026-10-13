@@ -12,8 +12,8 @@ A free, local-first Windows pipeline for generating original vertical 3D cartoon
 
 ## Quick start (Windows)
 
-1. Install a recent stable Blender build from https://www.blender.org/download/ and make sure `blender.exe` is on PATH, or set `BLENDER_EXE` in a `.env` file to its full path.
-2. Install FFmpeg and ensure `ffmpeg.exe` and `ffprobe.exe` are on PATH.
+1. If Blender or FFmpeg are missing, run `install_tools.bat` once (uses Windows Package Manager and needs internet), or install them manually from https://www.blender.org/download/ and https://ffmpeg.org/download.html.
+2. Close and reopen the terminal after installation so PATH refreshes; if needed, set `BLENDER_EXE`, `FFMPEG_EXE`, and `FFPROBE_EXE` in a `.env` file.
 3. Run `setup.bat` once, then `run.bat`.
 4. Finished MP4s appear in `output/ready/`; failed QA runs are moved to `output/quarantine/` with a report.
 
