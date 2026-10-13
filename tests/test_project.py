@@ -18,7 +18,7 @@ class ProjectConfigurationTests(unittest.TestCase):
         source = (ROOT / "scripts" / "blender_scene.py").read_text(encoding="utf-8")
         self.assertIn("bpy.ops.render.render(animation=True)", source)
         self.assertIn("primitive_uv_sphere_add", source)
-        self.assertIn("primitive_camera_add", source.lower() if "primitive_camera_add" in source.lower() else source)
+        self.assertIn("bpy.ops.object.camera_add", source)
 
     def test_no_paid_api_key_dependency(self):
         source = (ROOT / "scripts" / "generate.py").read_text(encoding="utf-8").lower()
