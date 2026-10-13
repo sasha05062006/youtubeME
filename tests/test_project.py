@@ -119,6 +119,7 @@ class ProjectConfigurationTests(unittest.TestCase):
         self.assertIn("sidechaincompress", graph)
         self.assertIn("[voicebus][ducked]amix", graph)
         self.assertIn("loudnorm=I=-16:TP=-1.5", graph)
+        self.assertIn("apad=whole_dur=30", graph)
         scene_graph = build_filter_graph([
             {"kind": "ambience", "start_seconds": 10, "duration_seconds": 20, "gain_db": -22},
             {"kind": "dialogue", "start_seconds": 12, "gain_db": 0},
