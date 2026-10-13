@@ -54,7 +54,7 @@ def build_audio_events(screenplay: dict[str, Any]) -> list[dict[str, Any]]:
                 "asset": ambience["asset"],
                 "start_seconds": scene_offset + float(ambience.get("start_seconds", 0)),
                 "gain_db": float(ambience.get("gain_db", -22)),
-                "duration_seconds": float(ambience.get("duration_seconds", scene_duration)),
+                "duration_seconds": float(ambience.get("duration_seconds", max(0.0, scene_duration - float(ambience.get("start_seconds", 0))))),
             })
         music = scene.get("music")
         if isinstance(music, dict) and music.get("asset"):
@@ -63,7 +63,7 @@ def build_audio_events(screenplay: dict[str, Any]) -> list[dict[str, Any]]:
                 "asset": music["asset"],
                 "start_seconds": scene_offset + float(music.get("start_seconds", 0)),
                 "gain_db": float(music.get("gain_db", -25)),
-                "duration_seconds": float(music.get("duration_seconds", scene_duration)),
+                "duration_seconds": float(music.get("duration_seconds", max(0.0, scene_duration - float(music.get("start_seconds", 0))))),
             })
         scene_offset += scene_duration
     return sorted(events, key=lambda event: event["start_seconds"])
@@ -103,10 +103,12 @@ def build_filter_graph(clips: list[dict[str, Any]], duration: float) -> str:
         label = f"a{index}"
         delay_ms = max(0, int(round(float(clip["start_seconds"]) * 1000)))
         gain_db = float(clip.get("gain_db", 0))
+        source_duration = clip.get("duration_seconds")
+        trim_prefix = f"atrim=duration={float(source_duration):.3f}," if source_duration is not None else ""
         filters.append(
-            f"[{index}:a]aresample=44100,volume={gain_db}dB,"
-            f"adelay={delay_ms}|{delay_ms},atrim=duration={duration},"
-            f"asetpts=PTS-STARTPTS[{label}]"
+            f"[{index}:a]aresample=44100,volume={gain_db}dB,{trim_prefix}"
+            f"asetpts=PTS-STARTPTS,adelay={delay_ms}|{delay_ms},"
+            f"atrim=duration={duration}[{label}]"
         )
         if clip["kind"] == "dialogue":
             voice_labels.append(f"[{label}]")
