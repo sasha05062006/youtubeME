@@ -64,6 +64,11 @@ def extract_json_object(text: str) -> dict[str, Any]:
 
 
 def make_messages(brief: str, duration: int, previous_errors: list[str] | None = None) -> list[dict[str, str]]:
+    from install_audio_assets import ASSETS
+    available_assets = {
+        folder: sorted(asset["name"] for asset in ASSETS if asset["folder"] == folder)
+        for folder in ("sfx", "ambience", "music")
+    }
     correction = ""
     if previous_errors:
         correction = "\nFix these validation errors from your previous attempt:\n- " + "\n- ".join(previous_errors)
@@ -79,7 +84,8 @@ def make_messages(brief: str, duration: int, previous_errors: list[str] | None =
         "Every scene must have id, duration_seconds, location, visual_action, camera, dialogue, sound_effects. "
         "sound_effects is a list of objects with asset (short snake_case identifier) and at_seconds. "
         "ambience is an optional list of {asset,start_seconds,gain_db}; music is an optional object "
-        "{asset,start_seconds,gain_db}. Use short generic asset identifiers, never URLs. "
+        "{asset,start_seconds,gain_db}. Use only asset IDs from this installed CC0 catalog; never invent IDs: "
+        + json.dumps(available_assets, ensure_ascii=False) + ". "
         "Do not include keys, external API instructions, HTML, or code. Keep child-safe content. "
         "JSON shape: {title,language,target_duration_seconds,style,cast:[...],scenes:[...]}. "
         "Use Russian for title, dialogue, and descriptions."
@@ -140,6 +146,17 @@ def plan_screenplay(
             raise PlannerError("The local endpoint response has no choices[0].message.content field.") from exc
         screenplay = extract_json_object(str(content))
         errors = validate_screenplay(screenplay)
+        from install_audio_assets import ASSETS
+        available_asset_ids = {asset["name"] for asset in ASSETS}
+        used_asset_ids = set()
+        for scene in screenplay.get("scenes", []):
+            used_asset_ids.update(item.get("asset") for item in scene.get("sound_effects", []) if isinstance(item, dict))
+            used_asset_ids.update(item.get("asset") for item in scene.get("ambience", []) if isinstance(item, dict))
+            music = scene.get("music")
+            if isinstance(music, dict) and music.get("asset"):
+                used_asset_ids.add(music["asset"])
+        for unknown_asset in sorted(used_asset_ids - available_asset_ids):
+            errors.append(f"unknown audio asset ID {unknown_asset!r}; use only IDs from the supplied catalog")
         if not errors:
             screenplay["language"] = screenplay.get("language") or "ru"
             screenplay["target_duration_seconds"] = duration
