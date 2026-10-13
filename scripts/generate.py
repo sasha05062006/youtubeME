@@ -1,0 +1,337 @@
+from __future__ import annotations
+
+import argparse
+import base64
+import json
+import os
+import random
+import re
+import shutil
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SETTINGS_PATH = ROOT / "config" / "settings.json"
+
+STORIES = [
+    {
+        "id": "robot_and_the_star",
+        "title": "THE LITTLE ROBOT",
+        "caption": "One small act can light up a whole world.",
+        "narration": "A little robot found a lonely star. Instead of keeping its light, the robot helped it find its way home.",
+        "prop": "star",
+        "accent": [0.12, 0.72, 1.0, 1.0],
+    },
+    {
+        "id": "moon_garden",
+        "title": "A GARDEN ON THE MOON",
+        "caption": "Give tiny things a chance to grow.",
+        "narration": "On a quiet moon, a tiny robot planted one seed. By morning, a glowing flower had made the whole crater feel like home.",
+        "prop": "flower",
+        "accent": [0.35, 1.0, 0.52, 1.0],
+    },
+    {
+        "id": "lost_comet",
+        "title": "THE LOST COMET",
+        "caption": "Sometimes the way home starts with a friend.",
+        "narration": "A young comet lost its path among the stars. A curious robot showed it the brightest constellation, and together they raced home.",
+        "prop": "crystal",
+        "accent": [1.0, 0.42, 0.25, 1.0],
+    },
+    {
+        "id": "brave_bubble",
+        "title": "THE BRAVEST BUBBLE",
+        "caption": "Being small does not mean being weak.",
+        "narration": "A tiny bubble was afraid of the giant ocean. It took one brave leap, met a friendly fish, and discovered a whole new world.",
+        "prop": "bubble",
+        "accent": [0.2, 0.85, 1.0, 1.0],
+    },
+    {
+        "id": "cosmic_cat",
+        "title": "THE COSMIC CAT",
+        "caption": "Curiosity can take you anywhere.",
+        "narration": "A space cat chased a floating light across the galaxy. The light was a lost planet beacon, and one playful paw saved an entire crew.",
+        "prop": "orb",
+        "accent": [0.9, 0.35, 1.0, 1.0],
+    },
+    {
+        "id": "tiny_mountain",
+        "title": "THE TINIEST CLIMBER",
+        "caption": "Progress is still progress, one step at a time.",
+        "narration": "A tiny robot wanted to climb the tallest mountain. It slipped, tried again, and learned that courage is simply taking the next step.",
+        "prop": "crystal",
+        "accent": [1.0, 0.68, 0.18, 1.0],
+    },
+]
+
+
+def load_settings() -> dict:
+    with SETTINGS_PATH.open("r", encoding="utf-8") as handle:
+        settings = json.load(handle)
+    return settings
+
+
+def executable_from_setting(env_name: str, configured: str, command: str) -> str | None:
+    env_value = os.environ.get(env_name, "").strip().strip('"')
+    candidate = env_value or configured.strip().strip('"') or shutil.which(command)
+    if not candidate:
+        return None
+    path = Path(candidate).expanduser()
+    if path.exists():
+        return str(path.resolve())
+    return shutil.which(candidate)
+
+
+def run_command(command: list[str], log_path: Path, timeout: int | None = None) -> subprocess.CompletedProcess:
+    with log_path.open("w", encoding="utf-8", errors="replace") as log:
+        log.write("$ " + subprocess.list2cmdline(command) + "\n\n")
+        log.flush()
+        return subprocess.run(
+            command,
+            cwd=str(ROOT),
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+
+
+def powershell_narration(text: str, destination: Path, work_dir: Path) -> bool:
+    if os.name != "nt":
+        return False
+    powershell = shutil.which("powershell.exe") or shutil.which("powershell")
+    if not powershell:
+        return False
+    encoded = base64.b64encode(text.encode("utf-8")).decode("ascii")
+    script = work_dir / "speak.ps1"
+    script.write_text(
+        "$ErrorActionPreference = 'Stop'\n"
+        "Add-Type -AssemblyName System.Speech\n"
+        "$text = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($args[1]))\n"
+        "$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer\n"
+        "$synth.Rate = 0\n"
+        "$synth.Volume = 100\n"
+        "$synth.SetOutputToWaveFile($args[0])\n"
+        "$synth.Speak($text)\n"
+        "$synth.Dispose()\n",
+        encoding="utf-8",
+    )
+    try:
+        result = subprocess.run(
+            [powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script), str(destination), encoded],
+            cwd=str(ROOT), stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120, check=False,
+        )
+        return result.returncode == 0 and destination.exists() and destination.stat().st_size > 44
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+def probe_video(ffprobe: str, path: Path) -> dict:
+    result = subprocess.run(
+        [ffprobe, "-v", "error", "-show_streams", "-show_format", "-of", "json", str(path)],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30, check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"ffprobe failed: {result.stderr.strip()}")
+    return json.loads(result.stdout)
+
+
+def qa_video(ffmpeg: str, ffprobe: str, video: Path, settings: dict, manifest: dict) -> dict:
+    qa_cfg = settings.get("qa", {})
+    report = {"passed": False, "checks": {}, "errors": []}
+    if not video.exists():
+        report["errors"].append("Output MP4 is missing.")
+        return report
+    report["checks"]["file_size_bytes"] = video.stat().st_size
+    report["checks"]["minimum_file_size_bytes"] = qa_cfg.get("min_file_size_bytes", 20000)
+    report["checks"]["file_size_ok"] = video.stat().st_size >= qa_cfg.get("min_file_size_bytes", 20000)
+    if not report["checks"]["file_size_ok"]:
+        report["errors"].append("Output file is unexpectedly small.")
+
+    try:
+        probe = probe_video(ffprobe, video)
+        streams = probe.get("streams", [])
+        video_stream = next((s for s in streams if s.get("codec_type") == "video"), None)
+        audio_stream = next((s for s in streams if s.get("codec_type") == "audio"), None)
+        if not video_stream:
+            report["errors"].append("No video stream found.")
+            return report
+        width = int(video_stream.get("width", 0))
+        height = int(video_stream.get("height", 0))
+        duration = float(probe.get("format", {}).get("duration", 0))
+        expected_duration = float(settings["video"]["duration_seconds"])
+        tolerance = float(qa_cfg.get("duration_tolerance_seconds", 2.0))
+        report["checks"].update({
+            "width": width,
+            "height": height,
+            "duration_seconds": round(duration, 3),
+            "expected_duration_seconds": expected_duration,
+            "vertical_video_ok": height > width,
+            "duration_ok": abs(duration - expected_duration) <= tolerance,
+            "audio_present": audio_stream is not None,
+        })
+        if qa_cfg.get("require_vertical_video", True) and height <= width:
+            report["errors"].append("Video is not portrait/vertical.")
+        if not report["checks"]["duration_ok"]:
+            report["errors"].append("Video duration is outside the configured tolerance.")
+        if settings.get("publish", {}).get("enabled", False):
+            report["errors"].append("Automatic publishing must remain disabled in this MVP.")
+        if manifest.get("external_media_used", True):
+            report["errors"].append("Manifest indicates external media; licensing review is required.")
+        if not manifest.get("asset_sources"):
+            report["errors"].append("Manifest is missing asset source records.")
+
+        if audio_stream:
+            volume = subprocess.run(
+                [ffmpeg, "-hide_banner", "-i", str(video), "-vn", "-af", "volumedetect", "-f", "null", "NUL"],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=60, check=False,
+            )
+            match = re.search(r"max_volume:\s*(-?(?:\d+(?:\.\d+)?|inf))\s*dB", volume.stderr)
+            if match and match.group(1) != "inf":
+                peak = float(match.group(1))
+                limit = float(qa_cfg.get("max_volume_db", -0.1))
+                report["checks"]["audio_max_volume_db"] = peak
+                report["checks"]["audio_peak_limit_db"] = limit
+                report["checks"]["audio_peak_ok"] = peak <= limit
+                if peak > limit:
+                    report["errors"].append(f"Audio peak {peak:.2f} dB exceeds limit {limit:.2f} dB.")
+            elif volume.returncode != 0:
+                report["errors"].append("Could not measure audio peak.")
+    except (OSError, ValueError, KeyError, RuntimeError, subprocess.TimeoutExpired, json.JSONDecodeError) as exc:
+        report["errors"].append(f"Video probe/QA error: {exc}")
+
+    report["passed"] = not report["errors"] and all(
+        value is True for key, value in report["checks"].items()
+        if key.endswith("_ok")
+    )
+    return report
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Generate an original procedural 3D vertical short.")
+    parser.add_argument("--seed", type=int, default=None, help="Repeatable story/scene seed.")
+    parser.add_argument("--story", choices=[s["id"] for s in STORIES], help="Use a specific bundled story.")
+    parser.add_argument("--list-stories", action="store_true", help="List bundled story templates and exit.")
+    args = parser.parse_args()
+
+    if args.list_stories:
+        for story in STORIES:
+            print(f'{story["id"]}: {story["title"]}')
+        return 0
+
+    settings = load_settings()
+    blender = executable_from_setting("BLENDER_EXE", "", "blender")
+    ffmpeg = executable_from_setting("FFMPEG_EXE", "", "ffmpeg")
+    ffprobe = executable_from_setting("FFPROBE_EXE", "", "ffprobe")
+    missing = [name for name, value in (("Blender", blender), ("FFmpeg", ffmpeg), ("ffprobe", ffprobe)) if not value]
+    if missing:
+        print("Missing required free tools: " + ", ".join(missing))
+        print("Install Blender and FFmpeg, add them to PATH, or set BLENDER_EXE / FFMPEG_EXE / FFPROBE_EXE.")
+        print("No video was generated; this pipeline never substitutes slides for 3D.")
+        return 2
+
+    seed = args.seed if args.seed is not None else int(settings["video"].get("seed", 0))
+    if seed == 0:
+        seed = int(time.time_ns() % 2_000_000_000)
+    rng = random.Random(seed)
+    story = next((s for s in STORIES if s["id"] == args.story), None) if args.story else rng.choice(STORIES)
+    run_id = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(seed)
+    work_dir = ROOT / "output" / "work" / run_id
+    frames_dir = work_dir / "frames"
+    ready_dir = ROOT / "output" / "ready"
+    quarantine_dir = ROOT / "output" / "quarantine"
+    for folder in (frames_dir, ready_dir, quarantine_dir):
+        folder.mkdir(parents=True, exist_ok=True)
+
+    story_path = work_dir / "story.json"
+    story_path.write_text(json.dumps(story, indent=2), encoding="utf-8")
+    settings_path = work_dir / "settings.json"
+    settings_path.write_text(json.dumps(settings, indent=2), encoding="utf-8")
+    blender_log = work_dir / "blender.log"
+    blender_script = ROOT / "scripts" / "blender_scene.py"
+    command = [
+        blender, "--background", "--factory-startup", "--python", str(blender_script), "--",
+        "--settings", str(settings_path), "--story", str(story_path), "--frames", str(frames_dir),
+    ]
+    print(f'Generating real 3D scene: {story["title"]} (seed {seed})')
+    render = run_command(command, blender_log, timeout=max(900, int(settings["video"]["duration_seconds"]) * 240))
+    if render.returncode != 0:
+        print(f"Blender render failed; inspect {blender_log}")
+        return 3
+
+    fps = int(settings["video"]["fps"])
+    silent_video = work_dir / "silent.mp4"
+    encode_log = work_dir / "encode.log"
+    encode = run_command([
+        ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
+        "-framerate", str(fps), "-start_number", "1", "-i", str(frames_dir / "frame_%04d.png"),
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "27", "-pix_fmt", "yuv420p",
+        "-movflags", "+faststart", str(silent_video),
+    ], encode_log, timeout=600)
+    if encode.returncode != 0 or not silent_video.exists():
+        print(f"FFmpeg frame encoding failed; inspect {encode_log}")
+        return 4
+
+    candidate = work_dir / "final.mp4"
+    audio_path = work_dir / "narration.wav"
+    audio_cfg = settings.get("audio", {})
+    narration_ok = audio_cfg.get("enabled", True) and audio_cfg.get("windows_speech", True) and powershell_narration(story["narration"], audio_path, work_dir)
+    if narration_ok:
+        mux_log = work_dir / "mux.log"
+        mux = run_command([
+            ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(silent_video), "-i", str(audio_path),
+            "-filter:a", f'loudnorm=I={audio_cfg.get("target_lufs", -16)}:TP={audio_cfg.get("true_peak_db", -1.5)}:LRA=11,apad',
+            "-t", str(settings["video"]["duration_seconds"]), "-c:v", "copy", "-c:a", "aac", "-b:a", "96k",
+            "-shortest", "-movflags", "+faststart", str(candidate),
+        ], mux_log, timeout=300)
+        if mux.returncode != 0 or not candidate.exists():
+            print(f"Audio mux failed; inspect {mux_log}; retaining silent render for QA.")
+            shutil.copy2(silent_video, candidate)
+            narration_ok = False
+    else:
+        shutil.copy2(silent_video, candidate)
+
+    manifest = {
+        "project": "YouTubeME",
+        "run_id": run_id,
+        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "story_id": story["id"],
+        "title": story["title"],
+        "narration_text": story["narration"],
+        "seed": seed,
+        "settings": settings,
+        "blender_executable": blender,
+        "ffmpeg_executable": ffmpeg,
+        "narration_generated": narration_ok,
+        "external_media_used": False,
+        "asset_sources": [{"type": "procedural_3d", "source": "generated locally by scripts/blender_scene.py", "license": "project-generated"}],
+        "publish_enabled": False,
+    }
+    report = qa_video(ffmpeg, ffprobe, candidate, settings, manifest) if settings.get("qa", {}).get("enabled", True) else {"passed": True, "checks": {"qa_disabled": True}, "errors": []}
+    manifest["qa"] = report
+    manifest["narration_note"] = "Offline Windows speech generated." if narration_ok else "No offline speech was available; output is silent."
+    target_dir = ready_dir if report["passed"] else quarantine_dir
+    final_path = target_dir / f"{run_id}_{story['id']}.mp4"
+    shutil.move(str(candidate), str(final_path))
+    manifest_path = target_dir / f"{run_id}_{story['id']}.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    print(f"QA: {'PASS' if report['passed'] else 'FAIL'}")
+    print(f"Video: {final_path.relative_to(ROOT)}")
+    print(f"Manifest: {manifest_path.relative_to(ROOT)}")
+    if not narration_ok:
+        print("Note: generated video has no narration; check Windows Speech availability.")
+    if not report["passed"]:
+        for error in report.get("errors", []):
+            print("QA ERROR:", error)
+        print("The file was quarantined and is not marked ready for publishing.")
+        return 5
+    print("Done. Review the MP4 before uploading it to TikTok or YouTube Shorts.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
