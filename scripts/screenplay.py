@@ -23,6 +23,9 @@ def validate_screenplay(data: dict[str, Any]) -> list[str]:
         errors.append("cast must be a non-empty list")
         cast = []
 
+    if len(cast) > 6:
+        errors.append("cast supports at most 6 characters in the current low-resource renderer")
+
     character_ids: set[str] = set()
     for index, character in enumerate(cast):
         if not isinstance(character, dict):
