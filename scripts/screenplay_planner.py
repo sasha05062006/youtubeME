@@ -103,6 +103,54 @@ def make_messages(brief: str, duration: int, previous_errors: list[str] | None =
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
 
+def build_offline_screenplay(brief: str, duration: int) -> dict[str, Any]:
+    """Return the included starter story retimed to the requested duration.
+
+    This keeps first-run use independent of any external model server. It is a
+    starter template, not full AI story generation from arbitrary briefs.
+    """
+    sample_path = ROOT / "examples" / "elephant_friends.screenplay.json"
+    try:
+        screenplay = json.loads(sample_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise PlannerError(f"Could not load built-in offline screenplay: {exc}") from exc
+
+    scenes = screenplay.get("scenes", [])
+    total = sum(float(scene["duration_seconds"]) for scene in scenes)
+    assigned = 0
+    for index, scene in enumerate(scenes):
+        old_duration = float(scene["duration_seconds"])
+        if index == len(scenes) - 1:
+            new_duration = duration - assigned
+        else:
+            new_duration = max(1, round(duration * old_duration / total))
+            assigned += new_duration
+        scene["duration_seconds"] = new_duration
+        ratio = new_duration / old_duration
+        for line in scene.get("dialogue", []):
+            line["at_seconds"] = min(round(float(line.get("at_seconds", 0)) * ratio, 2), max(0, new_duration - 1))
+        for cue in scene.get("sound_effects", []):
+            cue["at_seconds"] = min(round(float(cue.get("at_seconds", 0)) * ratio, 2), max(0, new_duration - 1))
+        for cue in scene.get("ambience", []):
+            cue["start_seconds"] = min(round(float(cue.get("start_seconds", 0)) * ratio, 2), max(0, new_duration - 1))
+            cue.pop("duration_seconds", None)
+        music = scene.get("music")
+        if isinstance(music, dict):
+            music["start_seconds"] = min(round(float(music.get("start_seconds", 0)) * ratio, 2), max(0, new_duration - 1))
+
+    cleaned = " ".join(brief.strip().split())
+    title = re.split(r"[.!?\\n]", cleaned, maxsplit=1)[0].strip(" «»\"'")
+    if title:
+        screenplay["title"] = title[:90]
+    screenplay["target_duration_seconds"] = duration
+    screenplay["generation"] = {
+        "backend": "built-in offline starter screenplay",
+        "model": None,
+        "note": "Retimed included elephant-friends sample; plot is not fully rewritten from the brief."
+    }
+    return screenplay
+
+
 def plan_screenplay(
     brief: str,
     duration: int,
