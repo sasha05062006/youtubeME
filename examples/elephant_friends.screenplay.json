@@ -1,0 +1,248 @@
+{
+  "title": "Слонёнок Топа и волшебный колокольчик",
+  "language": "ru",
+  "target_duration_seconds": 180,
+  "style": "тёплый стилизованный 3D-мультфильм для детей, мягкий свет, выразительная мимика",
+  "cast": [
+    {
+      "id": "elephant",
+      "name": "Топа",
+      "description": "любопытный слонёнок, добрый и смелый",
+      "voice_profile": "childlike_warm"
+    },
+    {
+      "id": "fox",
+      "name": "Рыжик",
+      "description": "шутливый лисёнок, быстро придумывает решения",
+      "voice_profile": "playful"
+    },
+    {
+      "id": "hare",
+      "name": "Прыг",
+      "description": "осторожный зайчонок, который замечает детали",
+      "voice_profile": "light_nervous"
+    },
+    {
+      "id": "bear",
+      "name": "Миша",
+      "description": "сильный и спокойный медвежонок",
+      "voice_profile": "low_gentle"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "scene_01_meadow",
+      "duration_seconds": 60,
+      "location": "солнечная лесная поляна",
+      "visual_action": "Четверо друзей находят следы, ведущие к старому волшебному колокольчику. Топа слышит тихий звон за деревьями.",
+      "camera": "общий план поляны, затем средние планы и крупные планы реакций",
+      "dialogue": [
+        {
+          "character_id": "elephant",
+          "text": "Ребята, вы слышали? Где-то звенит колокольчик!",
+          "at_seconds": 3,
+          "emotion": "curious"
+        },
+        {
+          "character_id": "fox",
+          "text": "Может, это завтрак сам нас зовёт?",
+          "at_seconds": 12,
+          "emotion": "playful"
+        },
+        {
+          "character_id": "hare",
+          "text": "Смотрите! Маленькие следы ведут в лес.",
+          "at_seconds": 22,
+          "emotion": "careful"
+        },
+        {
+          "character_id": "bear",
+          "text": "Тогда пойдём вместе. Никто не останется один.",
+          "at_seconds": 36,
+          "emotion": "reassuring"
+        },
+        {
+          "character_id": "elephant",
+          "text": "Договорились. Команда друзей отправляется на поиски!",
+          "at_seconds": 48,
+          "emotion": "excited"
+        }
+      ],
+      "ambience": [
+        {
+          "asset": "forest_day",
+          "start_seconds": 0,
+          "gain_db": -22
+        }
+      ],
+      "sound_effects": [
+        {
+          "asset": "small_bell",
+          "at_seconds": 8,
+          "gain_db": -8
+        },
+        {
+          "asset": "footsteps_grass",
+          "at_seconds": 28,
+          "gain_db": -13
+        },
+        {
+          "asset": "leaves_rustle",
+          "at_seconds": 43,
+          "gain_db": -15
+        }
+      ],
+      "music": {
+        "asset": "warm_adventure",
+        "start_seconds": 0,
+        "gain_db": -25
+      }
+    },
+    {
+      "id": "scene_02_hidden_grotto",
+      "duration_seconds": 60,
+      "location": "тенистая тропа и маленький грот у ручья",
+      "visual_action": "Следы приводят друзей к ручью. Рыжик перепрыгивает через камень, Прыг замечает за ним узкий проход, а Миша помогает Топе перейти воду.",
+      "camera": "движущийся общий план тропы, крупные планы лап и ног, затем низкий план у ручья",
+      "dialogue": [
+        {
+          "character_id": "fox",
+          "text": "Я первый! Смотрите, как ловко!",
+          "at_seconds": 4,
+          "emotion": "confident"
+        },
+        {
+          "character_id": "hare",
+          "text": "Рыжик, осторожнее! Камень скользкий!",
+          "at_seconds": 13,
+          "emotion": "worried"
+        },
+        {
+          "character_id": "fox",
+          "text": "Ой! Кажется, камень тоже решил поплавать!",
+          "at_seconds": 22,
+          "emotion": "surprised"
+        },
+        {
+          "character_id": "bear",
+          "text": "Держись за мою лапу, Топа. Вместе мы справимся.",
+          "at_seconds": 32,
+          "emotion": "gentle"
+        },
+        {
+          "character_id": "elephant",
+          "text": "За водопадом что-то блестит! Это может быть колокольчик!",
+          "at_seconds": 46,
+          "emotion": "hopeful"
+        }
+      ],
+      "ambience": [
+        {
+          "asset": "forest_stream",
+          "start_seconds": 0,
+          "gain_db": -22
+        }
+      ],
+      "sound_effects": [
+        {
+          "asset": "stone_scrape",
+          "at_seconds": 18,
+          "gain_db": -10
+        },
+        {
+          "asset": "water_splash",
+          "at_seconds": 24,
+          "gain_db": -8
+        },
+        {
+          "asset": "footsteps_stone",
+          "at_seconds": 38,
+          "gain_db": -13
+        },
+        {
+          "asset": "small_bell",
+          "at_seconds": 52,
+          "gain_db": -8
+        }
+      ],
+      "music": {
+        "asset": "gentle_mystery",
+        "start_seconds": 0,
+        "gain_db": -27
+      }
+    },
+    {
+      "id": "scene_03_friends",
+      "duration_seconds": 60,
+      "location": "уютная поляна за водопадом",
+      "visual_action": "Друзья находят колокольчик, застрявший между корнями. Они вместе освобождают его, и его звон собирает лесных зверей на праздник.",
+      "camera": "крупный план колокольчика, динамичные планы друзей, широкий финальный план праздника",
+      "dialogue": [
+        {
+          "character_id": "hare",
+          "text": "Он застрял между корнями! Если потянуть вместе, получится.",
+          "at_seconds": 4,
+          "emotion": "thoughtful"
+        },
+        {
+          "character_id": "elephant",
+          "text": "Раз, два, три — тянем!",
+          "at_seconds": 15,
+          "emotion": "determined"
+        },
+        {
+          "character_id": "bear",
+          "text": "Получилось! Вот что значит работать командой.",
+          "at_seconds": 25,
+          "emotion": "happy"
+        },
+        {
+          "character_id": "fox",
+          "text": "А теперь предлагаю отпраздновать это большим ягодным пирогом!",
+          "at_seconds": 35,
+          "emotion": "excited"
+        },
+        {
+          "character_id": "elephant",
+          "text": "Самое волшебное в этом колокольчике — то, что мы нашли его вместе.",
+          "at_seconds": 47,
+          "emotion": "warm"
+        }
+      ],
+      "ambience": [
+        {
+          "asset": "forest_clearing",
+          "start_seconds": 0,
+          "gain_db": -23
+        }
+      ],
+      "sound_effects": [
+        {
+          "asset": "roots_creak",
+          "at_seconds": 13,
+          "gain_db": -11
+        },
+        {
+          "asset": "magic_chime",
+          "at_seconds": 22,
+          "gain_db": -7
+        },
+        {
+          "asset": "friends_laugh",
+          "at_seconds": 37,
+          "gain_db": -13
+        },
+        {
+          "asset": "small_bell",
+          "at_seconds": 50,
+          "gain_db": -7
+        }
+      ],
+      "music": {
+        "asset": "happy_ending",
+        "start_seconds": 0,
+        "gain_db": -24
+      }
+    }
+  ]
+}
