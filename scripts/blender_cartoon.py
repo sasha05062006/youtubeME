@@ -259,10 +259,11 @@ def render_screenplay(screenplay_path: Path, frames_root: Path):
         cast = screenplay["cast"]
         if len(cast) <= 3:
             positions = [(-1.25 + i * 1.25, -0.15) for i in range(len(cast))]
-        else:
+        elif len(cast) == 4:
             positions = [(-1.05, -0.25), (1.05, -0.25), (-1.05, 1.0), (1.05, 1.0)]
-            if len(cast) > 4:
-                positions.extend([(-1.8 + i * 0.9, 1.7) for i in range(len(cast) - 4)])
+        else:
+            positions = [(-1.45, -0.25), (0.0, -0.25), (1.45, -0.25),
+                         (-1.45, 1.25), (0.0, 1.25), (1.45, 1.25)]
         for char_index, character in enumerate(cast):
             x, y = positions[char_index] if char_index < len(positions) else (0, 1.2)
             build_character(character, x, y, char_index, mats, frame_end)
