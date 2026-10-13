@@ -83,6 +83,11 @@ def validate_screenplay(data: dict[str, Any]) -> list[str]:
                 errors.append(f"{line_prefix} references unknown character_id: {character_id}")
             if not isinstance(line.get("text"), str) or not line["text"].strip():
                 errors.append(f"{line_prefix}.text must be a non-empty string")
+            at_seconds = line.get("at_seconds")
+            if not isinstance(at_seconds, (int, float)) or isinstance(at_seconds, bool):
+                errors.append(f"{line_prefix}.at_seconds must be numeric")
+            elif at_seconds < 0 or at_seconds > duration:
+                errors.append(f"{line_prefix}.at_seconds must be within the scene duration")
 
         effects = scene.get("sound_effects", [])
         if not isinstance(effects, list):
