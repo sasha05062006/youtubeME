@@ -213,7 +213,7 @@ def render_audio_timeline(
             if abs(pitch_factor - 1.0) > 0.001:
                 adjusted_path = work_dir / f"dialogue_{index:04d}_{event['character_id']}_voice.wav"
                 atempo = 1.0 / pitch_factor
-                filters = f"asetrate=44100*{pitch_factor:.5f},aresample=44100,atempo={atempo:.5f}"
+                filters = f"aresample=44100,asetrate=44100*{pitch_factor:.5f},aresample=44100,atempo={atempo:.5f}"
                 adjusted = _run([
                     ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(clip_path),
                     "-af", filters, "-c:a", "pcm_s16le", str(adjusted_path)
