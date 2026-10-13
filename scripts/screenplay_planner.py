@@ -131,7 +131,6 @@ def plan_screenplay(
                 "model": selected_model,
                 "messages": make_messages(brief, duration, previous_errors if attempt else None),
                 "temperature": 0.7,
-                "response_format": {"type": "json_object"},
             },
             timeout=timeout,
         )
