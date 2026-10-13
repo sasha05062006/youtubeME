@@ -10,7 +10,7 @@ class ProjectConfigurationTests(unittest.TestCase):
         settings = json.loads((ROOT / "config" / "settings.json").read_text(encoding="utf-8"))
         self.assertLessEqual(settings["render"]["width"], settings["render"]["height"])
         self.assertEqual(settings["render"]["width"] * 16, settings["render"]["height"] * 9)
-        self.assertLessEqual(settings["render"]["fps"], 15)
+        self.assertLessEqual(settings["video"]["fps"], 15)
         self.assertFalse(settings["publish"]["enabled"])
         self.assertTrue(settings["qa"]["enabled"])
 
