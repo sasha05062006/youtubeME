@@ -14,8 +14,9 @@ See [the autonomous cartoon studio MVP specification](docs/AUTONOMOUS_CARTOON_ST
 
 - Python orchestration, Blender procedural 3D rendering, and FFmpeg encoding/mixing.
 - Original Russian micro-story templates for smoke tests.
-- A basic single-character procedural scene with simple animation.
-- Optional offline Piper or Windows SAPI narration.
+- A prompt-to-screenplay planner for a user-controlled local OpenAI-compatible model endpoint.
+- A procedural multi-scene Blender renderer with primitive-based animal characters and simple animation.
+- Per-line Piper dialogue, per-character voice profiles, scene sound cues, CC0 starter assets, background ducking, and final audio/video assembly.
 - Output manifests and basic video/audio QA.
 - No paid API key is required for the existing template pipeline; external generative services are not called silently.
 - Automatic uploading and scheduling remain disabled.
