@@ -100,7 +100,40 @@ def run_command(command: list[str], log_path: Path, timeout: int | None = None) 
         )
 
 
-def powershell_narration(text: str, destination: Path, work_dir: Path) -> bool:
+def load_dotenv() -> None:
+    env_path = ROOT / ".env"
+    if not env_path.exists():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8-sig").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+def offline_narration(text: str, destination: Path, work_dir: Path, audio_cfg: dict) -> bool:
+    piper_executable = str(audio_cfg.get("piper_executable", "")).strip()
+    piper_model = str(audio_cfg.get("piper_model", "")).strip()
+    piper_executable = os.environ.get("PIPER_EXE", piper_executable)
+    piper_model = os.environ.get("PIPER_MODEL", piper_model)
+    if piper_executable and piper_model:
+        exe = shutil.which(piper_executable) or (piper_executable if Path(piper_executable).exists() else None)
+        model = Path(piper_model).expanduser()
+        if exe and model.exists():
+            try:
+                result = subprocess.run(
+                    [str(exe), "--model", str(model), "--output_file", str(destination)],
+                    input=text, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    timeout=180, check=False,
+                )
+                if result.returncode == 0 and destination.exists() and destination.stat().st_size > 44:
+                    return True
+            except (OSError, subprocess.TimeoutExpired):
+                pass
     if os.name != "nt":
         return False
     powershell = shutil.which("powershell.exe") or shutil.which("powershell")
@@ -128,7 +161,6 @@ def powershell_narration(text: str, destination: Path, work_dir: Path) -> bool:
         return result.returncode == 0 and destination.exists() and destination.stat().st_size > 44
     except (OSError, subprocess.TimeoutExpired):
         return False
-
 
 def probe_video(ffprobe: str, path: Path) -> dict:
     result = subprocess.run(
@@ -223,6 +255,7 @@ def main() -> int:
             print(f'{story["id"]}: {story["title"]}')
         return 0
 
+    load_dotenv()
     settings = load_settings()
     blender = executable_from_setting("BLENDER_EXE", "", "blender")
     ffmpeg = executable_from_setting("FFMPEG_EXE", "", "ffmpeg")
@@ -247,6 +280,7 @@ def main() -> int:
     for folder in (frames_dir, ready_dir, quarantine_dir):
         folder.mkdir(parents=True, exist_ok=True)
 
+    settings["video"]["seed"] = seed
     story_path = work_dir / "story.json"
     story_path.write_text(json.dumps(story, indent=2), encoding="utf-8")
     settings_path = work_dir / "settings.json"
@@ -279,7 +313,7 @@ def main() -> int:
     candidate = work_dir / "final.mp4"
     audio_path = work_dir / "narration.wav"
     audio_cfg = settings.get("audio", {})
-    narration_ok = audio_cfg.get("enabled", True) and audio_cfg.get("windows_speech", True) and powershell_narration(story["narration"], audio_path, work_dir)
+    narration_ok = audio_cfg.get("enabled", True) and audio_cfg.get("windows_speech", True) and offline_narration(story["narration"], audio_path, work_dir, audio_cfg)
     if narration_ok:
         mux_log = work_dir / "mux.log"
         mux = run_command([
