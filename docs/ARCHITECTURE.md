@@ -19,8 +19,8 @@ The product target is described in [AUTONOMOUS_CARTOON_STUDIO_MVP.md](AUTONOMOUS
 
 1. **Brief parser and screenplay planner:** convert a natural-language brief into a validated screenplay with cast, stable character IDs, scenes, dialogue, acting cues, camera direction, and duration budgets.
 2. **Asset and continuity manager:** create/reuse consistent 3D characters, props, environments, and visual references across shots.
-3. **Line-level voice renderer:** generate each dialogue line separately, assign a voice profile per character, and preserve acting cues where supported. Narrator and character dialogue must be distinct.
-4. **Sound designer and timeline mixer:** place synchronized sound effects, scene ambience, and music; duck music under dialogue; normalize loudness and avoid clipping.
+3. **Line-level voice renderer (first standalone stage added):** `scripts/audio_timeline.py` generates each dialogue line separately using Piper, assigns a configured model and pitch/tempo profile to each character, and reports when characters share a model. Profile changes are subtle processing, not a substitute for separate expressive voice models or human acting.
+4. **Sound designer and timeline mixer (first standalone stage added):** the same script places scene-local sound effects, ambience, and music at their global offsets and loudness-normalizes the mix. Audio assets must be supplied locally under `assets/audio/sfx/`, `assets/audio/ambience/`, and `assets/audio/music/`; every referenced asset must exist. Automatic music ducking and end-to-end video integration remain unfinished.
 5. **Multi-scene 3D renderer:** stage multiple characters, animate actions, cut between cameras, and render each scene. Jobs should be resumable and cache completed stages.
 6. **Final assembler and QA:** combine video and audio timelines, verify duration and synchronization, detect missing dialogue and audio, inspect black/silent sections, and write a provenance/license manifest.
 
