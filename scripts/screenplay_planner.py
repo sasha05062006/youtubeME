@@ -149,20 +149,25 @@ def plan_screenplay(
         from install_audio_assets import ASSETS
         available_asset_ids = {asset["name"] for asset in ASSETS}
         used_asset_ids = set()
-        for scene in screenplay.get("scenes", []) if isinstance(screenplay.get("scenes"), list) else []:
+        scenes = screenplay.get("scenes", [])
+        if not isinstance(scenes, list):
+            scenes = []
+        for scene in scenes:
             if not isinstance(scene, dict):
                 continue
             effects = scene.get("sound_effects", [])
+            if not isinstance(effects, list):
+                effects = []
             ambience = scene.get("ambience", [])
+            if not isinstance(ambience, list):
+                ambience = []
             used_asset_ids.update(
                 item["asset"] for item in effects
-                if isinstance(effects, list) and isinstance(item, dict)
-                and isinstance(item.get("asset"), str) and item["asset"]
+                if isinstance(item, dict) and isinstance(item.get("asset"), str) and item["asset"]
             )
             used_asset_ids.update(
                 item["asset"] for item in ambience
-                if isinstance(ambience, list) and isinstance(item, dict)
-                and isinstance(item.get("asset"), str) and item["asset"]
+                if isinstance(item, dict) and isinstance(item.get("asset"), str) and item["asset"]
             )
             music = scene.get("music")
             if isinstance(music, dict) and music.get("asset"):
