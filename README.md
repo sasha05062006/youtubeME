@@ -24,7 +24,9 @@ See [the autonomous cartoon studio MVP specification](docs/AUTONOMOUS_CARTOON_ST
 
 Piper and Windows SAPI are basic offline fallbacks; they can sound synthetic and do not provide professional character acting. The current implementation does **not** yet generate separate dialogue lines for multiple characters, expressive performances, or a full sound-effects/music timeline. Installing voice models does not by itself make narration sound human.
 
-The project must add a screenplay planner, per-character voice profiles, line-level audio generation, a synchronized sound timeline, and multi-scene 3D staging before it can meet the product target. High-quality neural voices or generative assets may require optional external services; their actual free limits, privacy implications, licenses, and payment requirements must be checked before integration.
+A first standalone audio-timeline renderer now exists at `scripts/audio_timeline.py`. It synthesizes each screenplay dialogue line separately with Piper, supports per-character model/profile assignment, places scene-local sound effects/ambience/music on the global timeline, mixes and loudness-normalizes the result, and writes a report. It is not yet wired into the existing video generator, and licensed audio files must be placed in `assets/audio/sfx/`, `assets/audio/ambience/`, and `assets/audio/music/`. The renderer fails clearly when a referenced asset or voice model is missing rather than silently replacing it with silence.
+
+The project must still add a screenplay planner, connect the audio timeline to the video pipeline, and implement multi-scene 3D staging before it can meet the product target. High-quality neural voices or generative assets may require optional external services; their actual free limits, privacy implications, licenses, and payment requirements must be checked before integration.
 
 ## Windows quick start for the existing prototype
 
@@ -33,6 +35,8 @@ The project must add a screenplay planner, per-character voice profiles, line-le
 3. Run `setup.bat` once.
 4. Run `run.bat` to generate one of the currently bundled template shorts.
 5. Check `output/ready/` and the accompanying manifest. Failed QA outputs go to `output/quarantine/`.
+
+For an audio-only screenplay test, run `python scripts/screenplay.py examples/elephant_friends.screenplay.json` to validate the included sample, then run `python scripts/audio_timeline.py examples/elephant_friends.screenplay.json` after installing the listed voice models and adding the referenced licensed sound files. This separate audio stage is not yet integrated with the video render.
 
 The current prototype uses conservative render settings for a low-resource Windows laptop. A three-minute multi-scene cartoon is substantially heavier and has not been verified on the target 4 GB RAM / Celeron-class machine. Use short test renders while building out the full pipeline.
 
