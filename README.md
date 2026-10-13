@@ -2,7 +2,7 @@
 
 A free-first Windows project intended to turn one natural-language brief into a complete 3D cartoon: screenplay, consistent characters, multi-voice dialogue, sound effects, ambience, music, rendered scenes, and a final mixed video.
 
-**Important status:** the repository currently contains an early procedural 3D short generator, not the complete prompt-driven cartoon studio described above. It still uses fixed micro-story templates and a single narration track. A three-minute multi-character cartoon with natural acting, distinct voices, and synchronized sound design is a target, not a feature that is already finished.
+**Important status:** the repository now has a one-command multi-scene production path, but it has not yet been rendered end-to-end on the target laptop. The 3D characters are procedural low-poly models, and the voice engine is still Piper; this is an early working foundation, not studio-grade animation or human-level voice acting.
 
 ## Product target
 
@@ -22,11 +22,11 @@ See [the autonomous cartoon studio MVP specification](docs/AUTONOMOUS_CARTOON_ST
 
 ## Voice quality warning
 
-Piper and Windows SAPI are basic offline fallbacks; they can sound synthetic and do not provide professional character acting. The earlier short generator still exists as a prototype; the new `create_cartoon.bat` path is the first integrated multi-scene flow. It uses procedural low-poly animal characters and a local LLM endpoint for screenplay planning, so it is not equivalent to a studio-quality character-animation package. Installing voice models does not by itself make narration sound human.
+Piper and Windows SAPI are basic offline fallbacks; they can sound synthetic and do not provide professional character acting. The `create_cartoon.bat` path integrates local screenplay planning, multi-scene procedural Blender rendering, per-line character dialogue, CC0 ambience/effects/music, background ducking, final muxing, and a QA report. It uses procedural low-poly animal characters and a local LLM endpoint for screenplay planning, so it is not equivalent to a studio-quality character-animation package. Installing voice models does not by itself make narration sound human.
 
-A first standalone audio-timeline renderer now exists at `scripts/audio_timeline.py`. It synthesizes each screenplay dialogue line separately with Piper, supports per-character model/profile assignment, places scene-local sound effects/ambience/music on the global timeline, ducks background audio under dialogue, mixes and loudness-normalizes the result, and writes a report. It is not yet wired into the existing video generator, and audio files must be installed in `assets/audio/sfx/`, `assets/audio/ambience/`, and `assets/audio/music/`. Run `install_audio_assets.bat` once to download a small starter library of CC0 effects, ambience, and music (internet required; no payment or API key). The renderer fails clearly when a referenced asset or voice model is missing rather than silently replacing it with silence.
+A first standalone audio-timeline renderer now exists at `scripts/audio_timeline.py`. It synthesizes each screenplay dialogue line separately with Piper, supports per-character model/profile assignment, places scene-local sound effects/ambience/music on the global timeline, ducks background audio under dialogue, mixes and loudness-normalizes the result, and writes a report. The integrated flow calls this renderer automatically. Audio files are installed in `assets/audio/sfx/`, `assets/audio/ambience/`, and `assets/audio/music/`. Run `install_audio_assets.bat` once to download a small starter library of CC0 effects, ambience, and music (internet required; no payment or API key). The renderer fails clearly when a referenced asset or voice model is missing rather than silently replacing it with silence.
 
-The project must still add a screenplay planner, connect the audio timeline to the video pipeline, and implement multi-scene 3D staging before it can meet the product target. High-quality neural voices or generative assets may require optional external services; their actual free limits, privacy implications, licenses, and payment requirements must be checked before integration.
+The main remaining work is to improve the visual acting/rigs, evaluate higher-quality expressive Russian TTS options that remain free, add richer sound libraries, and verify the entire flow on the actual laptop. High-quality neural voices or generative assets may require optional external services; their actual free limits, privacy implications, licenses, and payment requirements must be checked before integration.
 
 ## Windows quick start
 
