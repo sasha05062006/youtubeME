@@ -11,13 +11,13 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 VOICE_MODELS = {
-    "warm": "ru_RU-irina-medium.onnx",
-    "childlike_warm": "ru_RU-irina-medium.onnx",
-    "gentle": "ru_RU-irina-medium.onnx",
-    "playful": "ru_RU-ruslan-medium.onnx",
-    "youthful_playful": "ru_RU-ruslan-medium.onnx",
-    "low_gentle": "ru_RU-ruslan-medium.onnx",
-    "light_nervous": "ru_RU-irina-medium.onnx",
+    "warm": ("ru_RU-irina-medium.onnx", 1.00),
+    "childlike_warm": ("ru_RU-irina-medium.onnx", 1.07),
+    "gentle": ("ru_RU-irina-medium.onnx", 0.94),
+    "playful": ("ru_RU-ruslan-medium.onnx", 1.08),
+    "youthful_playful": ("ru_RU-ruslan-medium.onnx", 1.14),
+    "low_gentle": ("ru_RU-ruslan-medium.onnx", 0.88),
+    "light_nervous": ("ru_RU-irina-medium.onnx", 1.12),
 }
 
 
@@ -115,18 +115,26 @@ def render_audio_timeline(
     events = build_audio_events(screenplay)
     clips: list[dict[str, Any]] = []
     warnings: list[str] = []
+    assigned_models: dict[str, str] = {}
 
     for index, event in enumerate(events):
         kind = event["kind"]
         if kind == "dialogue":
             character = cast[event["character_id"]]
             explicit_model = character.get("voice_model")
-            model_name = explicit_model or VOICE_MODELS.get(character["voice_profile"])
+            profile = character["voice_profile"]
+            profile_config = VOICE_MODELS.get(profile)
+            model_name = explicit_model or (profile_config[0] if profile_config else None)
+            pitch_factor = float(character.get("pitch_factor", profile_config[1] if profile_config else 1.0))
             if not model_name:
                 raise AudioTimelineError(
                     f"No local voice model configured for {character['name']} "
-                    f"(profile {character['voice_profile']!r}); set cast[].voice_model."
+                    f"(profile {profile!r}); set cast[].voice_model."
                 )
+            if Path(model_name).name != model_name or not model_name.lower().endswith(".onnx"):
+                raise AudioTimelineError(f"Voice model must be an .onnx filename inside models/: {model_name!r}")
+            if not 0.75 <= pitch_factor <= 1.25:
+                raise AudioTimelineError(f"pitch_factor for {character['name']} must be between 0.75 and 1.25")
             model_path = (models_dir / model_name).resolve()
             if not model_path.is_file():
                 raise AudioTimelineError(
@@ -144,8 +152,22 @@ def render_audio_timeline(
             if not clip_path.exists() or clip_path.stat().st_size <= 44:
                 raise AudioTimelineError(
                     f"Piper returned no speech for {character['name']}. "
-                    "Check that this Piper build accepts stdin text."
+                    "Check that the Piper executable and model are compatible."
                 )
+            assigned_models[event["character_id"]] = model_name
+            if abs(pitch_factor - 1.0) > 0.001:
+                adjusted_path = work_dir / f"dialogue_{index:04d}_{event['character_id']}_voice.wav"
+                atempo = 1.0 / pitch_factor
+                filters = f"asetrate=44100*{pitch_factor:.5f},aresample=44100,atempo={atempo:.5f}"
+                adjusted = _run([
+                    ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(clip_path),
+                    "-af", filters, "-c:a", "pcm_s16le", str(adjusted_path)
+                ], timeout=180)
+                if adjusted.returncode != 0 or not adjusted_path.exists():
+                    raise AudioTimelineError(
+                        f"Could not apply voice profile to {character['name']}: {adjusted.stderr[-1000:]}"
+                    )
+                clip_path = adjusted_path
             clips.append({**event, "path": clip_path})
         else:
             folder = {"sound_effect": "sfx", "ambience": "ambience", "music": "music"}[kind]
@@ -154,6 +176,15 @@ def render_audio_timeline(
 
     if not clips:
         raise AudioTimelineError("Screenplay contains no dialogue, music, ambience, or sound effects.")
+    model_users: dict[str, list[str]] = {}
+    for character_id, model_name in assigned_models.items():
+        model_users.setdefault(model_name, []).append(cast[character_id]["name"])
+    for model_name, names in model_users.items():
+        if len(names) > 1:
+            warnings.append(
+                f"{', '.join(names)} share {model_name}; pitch/tempo profiles vary the sound, "
+                "but separate neural models are preferable for clearly distinct voices."
+            )
 
     duration = float(screenplay["target_duration_seconds"])
     command = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y"]
@@ -197,8 +228,9 @@ def render_audio_timeline(
         "ambience_tracks": sum(clip["kind"] == "ambience" for clip in clips),
         "music_tracks": sum(clip["kind"] == "music" for clip in clips),
         "warnings": warnings,
+        "voice_models": assigned_models,
         "human_quality_claim": False,
-        "note": "Offline voice quality depends on the installed model; mixing cannot make a basic TTS voice sound like a human actor.",
+        "note": "Pitch/tempo profiles provide modest character differentiation, not human acting. Evaluate the audio before publishing.",
     }
 
 
