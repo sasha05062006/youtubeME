@@ -22,11 +22,22 @@ See [the autonomous cartoon studio MVP specification](docs/AUTONOMOUS_CARTOON_ST
 
 ## Voice quality warning
 
-Piper and Windows SAPI are basic offline fallbacks; they can sound synthetic and do not provide professional character acting. The current implementation does **not** yet generate separate dialogue lines for multiple characters, expressive performances, or a full sound-effects/music timeline. Installing voice models does not by itself make narration sound human.
+Piper and Windows SAPI are basic offline fallbacks; they can sound synthetic and do not provide professional character acting. The earlier short generator still exists as a prototype; the new `create_cartoon.bat` path is the first integrated multi-scene flow. It uses procedural low-poly animal characters and a local LLM endpoint for screenplay planning, so it is not equivalent to a studio-quality character-animation package. Installing voice models does not by itself make narration sound human.
 
 A first standalone audio-timeline renderer now exists at `scripts/audio_timeline.py`. It synthesizes each screenplay dialogue line separately with Piper, supports per-character model/profile assignment, places scene-local sound effects/ambience/music on the global timeline, ducks background audio under dialogue, mixes and loudness-normalizes the result, and writes a report. It is not yet wired into the existing video generator, and audio files must be installed in `assets/audio/sfx/`, `assets/audio/ambience/`, and `assets/audio/music/`. Run `install_audio_assets.bat` once to download a small starter library of CC0 effects, ambience, and music (internet required; no payment or API key). The renderer fails clearly when a referenced asset or voice model is missing rather than silently replacing it with silence.
 
 The project must still add a screenplay planner, connect the audio timeline to the video pipeline, and implement multi-scene 3D staging before it can meet the product target. High-quality neural voices or generative assets may require optional external services; their actual free limits, privacy implications, licenses, and payment requirements must be checked before integration.
+
+## Windows quick start
+
+1. Run `install_tools.bat` if Blender and FFmpeg are not installed; reopen the terminal after installation.
+2. Run `setup.bat` once.
+3. Run `install_russian_voice.bat` once to install Piper and the two Russian voice models.
+4. Start your local OpenAI-compatible language-model server at `http://127.0.0.1:31415/v1` (or set `YOUTUBEME_LLM_BASE_URL`).
+5. Run `create_cartoon.bat`, describe the story, and enter the duration in seconds. If the starter sound pack is missing, the program offers to download the CC0 assets.
+6. Find the MP4 and JSON report in `output/ready/`; failed quality checks go to `output/quarantine/`.
+
+The one-click flow is integrated in the repository, but must still be tested end-to-end on the target laptop. It relies on a compatible local model server being active and on the installed Blender/FFmpeg/Piper tools.
 
 ## Windows quick start for the existing prototype
 
