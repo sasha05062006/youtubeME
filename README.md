@@ -17,11 +17,13 @@ A free, local-first Windows pipeline for generating original vertical 3D cartoon
 3. Run `setup.bat` once, then `run.bat`.
 4. Finished MP4s appear in `output/ready/`; failed QA runs are moved to `output/quarantine/` with a report.
 
-The setup script checks prerequisites and never installs paid tools or downloads AI model weights. Narration uses offline Windows Speech when available, with an optional local Piper executable and model supported by `audio.piper_executable` / `audio.piper_model` (or `PIPER_EXE` / `PIPER_MODEL` environment variables).
+The setup script checks prerequisites and never installs paid tools. For better Russian narration, run `install_russian_voice.bat` once to download Piper and the optional Irina/Ruslan voice models; this needs internet for the download, but narration itself runs locally afterward. The voice models and engine have their own licenses, so review them before commercial use. If Piper is unavailable, the app attempts an installed Russian Windows speech voice.
 
 ## Current MVP behavior
 
-- Selects a short original English micro-story from bundled templates.
+- Opens a menu to choose a Russian story/topic, character, and voice.
+- Includes original Russian micro-stories and narration text.
+- Supports robot, cat, astronaut, and dragon character variants.
 - Builds and animates a low-poly 3D character, environment, props, lighting, and camera.
 - Renders portrait frames with Blender in background mode.
 - Adds offline narration when the local speech engine is available, then muxes and normalizes audio/video with FFmpeg.
@@ -31,7 +33,7 @@ This is deliberately a reliable procedural 3D foundation, not a claim that a lar
 
 ## Configuration
 
-Edit `config/settings.json` to change duration, resolution, FPS, output language, and story selection. Defaults are intentionally conservative. Set `publish.enabled` to `false` (default); this project does not auto-upload to social platforms.
+Run `run.bat` in a terminal to open the interactive menu for topic/story, character, and voice. Edit `config/settings.json` to change duration, resolution, FPS, and audio settings. Defaults are intentionally conservative. Set `publish.enabled` to `false` (default); this project does not auto-upload to social platforms.
 
 ## Troubleshooting
 
