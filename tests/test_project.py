@@ -29,6 +29,38 @@ class ProjectConfigurationTests(unittest.TestCase):
         self.assertIn('character == "astronaut"', scene)
         self.assertIn('character == "dragon"', scene)
 
+
+    def test_screenplay_validator_checks_multi_character_and_audio_timeline(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from screenplay import validate_screenplay
+
+        valid = {
+            "title": "Слонёнок и друзья",
+            "target_duration_seconds": 30,
+            "cast": [
+                {"id": "elephant", "name": "Топа", "description": "Слонёнок", "voice_profile": "warm"},
+                {"id": "fox", "name": "Рыжик", "description": "Лисёнок", "voice_profile": "playful"},
+            ],
+            "scenes": [
+                {
+                    "id": "forest",
+                    "duration_seconds": 30,
+                    "location": "Лес",
+                    "visual_action": "Друзья ищут колокольчик",
+                    "camera": "Средний план",
+                    "dialogue": [{"character_id": "elephant", "text": "Вы слышали звон?"}],
+                    "sound_effects": [{"asset": "bell", "at_seconds": 7.5}],
+                }
+            ],
+        }
+        self.assertEqual(validate_screenplay(valid), [])
+        valid["scenes"][0]["dialogue"][0]["character_id"] = "missing"
+        valid["scenes"][0]["sound_effects"][0]["at_seconds"] = 35
+        errors = validate_screenplay(valid)
+        self.assertTrue(any("unknown character_id" in error for error in errors))
+        self.assertTrue(any("within the scene duration" in error for error in errors))
+
     def test_no_paid_api_key_dependency(self):
         source = (ROOT / "scripts" / "generate.py").read_text(encoding="utf-8").lower()
         self.assertNotIn("openai_api_key", source)
