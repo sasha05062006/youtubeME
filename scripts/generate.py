@@ -25,7 +25,7 @@ STORIES = [
     {"id":"tiny_mountain","topic":"Мотивация","title":"САМЫЙ МАЛЕНЬКИЙ АЛЬПИНИСТ","caption":"Главное — сделать следующий шаг","narration":"Маленький робот мечтал взобраться на самую высокую гору. Он падал, скользил и снова начинал путь. Когда он наконец добрался до вершины, то понял: смелость — это не отсутствие страха. Это решение попробовать ещё раз.","prop":"crystal","accent":[1.0,0.68,0.18,1.0]}
 ]
 CHARACTERS = {"robot":"Робот","cat":"Кот","astronaut":"Космонавт","dragon":"Дракон"}
-VOICES = {"irina":"Piper — женский голос Ирина","denis":"Piper — мужской голос Денис","windows":"Русский голос Windows","silent":"Без озвучки"}
+VOICES = {"irina":"Piper — женский голос Ирина","denis":"Piper — мужской голос Руслан","windows":"Русский голос Windows","silent":"Без озвучки"}
 
 
 def load_settings() -> dict:
@@ -230,7 +230,7 @@ def run_wizard(args):
     settings.setdefault("audio", {})["enabled"] = args.voice != "silent"
     settings["audio"]["voice_name"] = args.voice
     if args.voice in ("irina", "denis"):
-        model_name = "ru_RU-irina-medium.onnx" if args.voice == "irina" else "ru_RU-denis-medium.onnx"
+        model_name = "ru_RU-irina-medium.onnx" if args.voice == "irina" else "ru_RU-ruslan-medium.onnx"
         settings["audio"]["piper_model"] = str(ROOT / "models" / model_name)
     elif args.voice == "windows":
         settings["audio"]["piper_model"] = ""
