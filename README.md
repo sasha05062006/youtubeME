@@ -14,7 +14,7 @@ See [the autonomous cartoon studio MVP specification](docs/AUTONOMOUS_CARTOON_ST
 
 - Python orchestration, Blender procedural 3D rendering, and FFmpeg encoding/mixing.
 - Original Russian micro-story templates for smoke tests.
-- A prompt-to-screenplay planner for a user-controlled local OpenAI-compatible model endpoint.
+- An offline starter screenplay planner; an optional user-controlled local OpenAI-compatible model endpoint can be enabled separately.
 - A procedural multi-scene Blender renderer with primitive-based animal characters and simple animation.
 - Per-line Piper dialogue, per-character voice profiles, scene sound cues, CC0 starter assets, background ducking, and final audio/video assembly.
 - Output manifests and basic video/audio QA.
@@ -31,10 +31,9 @@ The main remaining work is to improve the visual acting/rigs, evaluate higher-qu
 
 ## Windows quick start
 
-1. Run `install_tools.bat` if Blender and FFmpeg are not installed; reopen the terminal after installation.
-2. Run `setup.bat` once.
-3. Run `install_russian_voice.bat` once to install Piper and the two Russian voice models.
-4. Run `create_cartoon.bat`, describe the story, and enter the duration in seconds. A separate language-model server is **not required** for the built-in offline starter screenplay.
+For a guided first install, run `FIRST_RUN.bat` (details in [СТАРТ_ЗДЕСЬ.md](СТАРТ_ЗДЕСЬ.md)). It installs the free tools, Python environment, and offline Russian voices. After it finishes, reopen the terminal so PATH refreshes, then run `create_cartoon.bat`.
+
+Manual installation is also available: run `install_tools.bat`, reopen the terminal, run `setup.bat`, then `install_russian_voice.bat`. Finally run `create_cartoon.bat`, describe the story, and enter the duration in seconds. A separate language-model server is **not required** for the built-in offline starter screenplay.
 5. If the starter sound pack is missing, the program offers to download the free CC0 assets.
 6. Find the MP4 and JSON report in `output/ready/`; failed quality checks go to `output/quarantine/`.
 
@@ -42,7 +41,7 @@ The main remaining work is to improve the visual acting/rigs, evaluate higher-qu
 
 The one-click flow is integrated in the repository, but must still be tested end-to-end on the target laptop. Blender/FFmpeg/Piper still need to be installed, and a three-minute render may be very slow on a 4 GB RAM / Celeron-class laptop.
 
-## Windows quick start for the existing prototype
+## Windows quick start for the existing short-template prototype
 
 1. Install Blender and FFmpeg if they are not already available.
 2. Optionally run `install_russian_voice.bat` to download the basic offline Piper voices.
