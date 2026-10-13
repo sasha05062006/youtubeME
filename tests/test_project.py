@@ -81,6 +81,20 @@ class ProjectConfigurationTests(unittest.TestCase):
         self.assertEqual(offsets[("dialogue", "fox")], 11)
         self.assertEqual(offsets[("ambience", "forest")], 10)
 
+    def test_audio_mix_ducks_background_under_dialogue(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from audio_timeline import build_filter_graph
+
+        graph = build_filter_graph([
+            {"kind": "dialogue", "start_seconds": 2, "gain_db": 0},
+            {"kind": "music", "start_seconds": 0, "gain_db": -24},
+            {"kind": "sound_effect", "start_seconds": 4, "gain_db": -8},
+        ], 30)
+        self.assertIn("sidechaincompress", graph)
+        self.assertIn("[voicebus][ducked]amix", graph)
+        self.assertIn("loudnorm=I=-16:TP=-1.5", graph)
+
     def test_included_three_minute_screenplay_is_valid(self):
         import sys
         sys.path.insert(0, str(ROOT / "scripts"))
