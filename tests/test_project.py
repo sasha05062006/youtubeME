@@ -81,6 +81,22 @@ class ProjectConfigurationTests(unittest.TestCase):
         self.assertEqual(offsets[("dialogue", "fox")], 11)
         self.assertEqual(offsets[("ambience", "forest")], 10)
 
+    def test_cc0_audio_installer_covers_example_assets(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from install_audio_assets import ASSETS
+
+        sample = json.loads((ROOT / "examples" / "elephant_friends.screenplay.json").read_text(encoding="utf-8"))
+        installed_ids = {asset["name"] for asset in ASSETS}
+        for scene in sample["scenes"]:
+            for effect in scene.get("sound_effects", []):
+                self.assertIn(effect["asset"], installed_ids)
+            for ambience in scene.get("ambience", []):
+                self.assertIn(ambience["asset"], installed_ids)
+            if scene.get("music"):
+                self.assertIn(scene["music"]["asset"], installed_ids)
+        self.assertTrue(all("CC0" in asset["license"] for asset in ASSETS))
+
     def test_audio_mix_ducks_background_under_dialogue(self):
         import sys
         sys.path.insert(0, str(ROOT / "scripts"))
