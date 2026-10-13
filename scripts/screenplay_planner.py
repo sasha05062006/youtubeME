@@ -150,8 +150,14 @@ def plan_screenplay(
         available_asset_ids = {asset["name"] for asset in ASSETS}
         used_asset_ids = set()
         for scene in screenplay.get("scenes", []):
-            used_asset_ids.update(item.get("asset") for item in scene.get("sound_effects", []) if isinstance(item, dict))
-            used_asset_ids.update(item.get("asset") for item in scene.get("ambience", []) if isinstance(item, dict))
+            used_asset_ids.update(
+                item["asset"] for item in scene.get("sound_effects", [])
+                if isinstance(item, dict) and isinstance(item.get("asset"), str) and item["asset"]
+            )
+            used_asset_ids.update(
+                item["asset"] for item in scene.get("ambience", [])
+                if isinstance(item, dict) and isinstance(item.get("asset"), str) and item["asset"]
+            )
             music = scene.get("music")
             if isinstance(music, dict) and music.get("asset"):
                 used_asset_ids.add(music["asset"])
