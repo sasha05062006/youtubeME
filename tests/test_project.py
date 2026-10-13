@@ -153,6 +153,18 @@ class ProjectConfigurationTests(unittest.TestCase):
         self.assertEqual(result["generation"]["model"], "test-local-model")
         self.assertEqual(len(result["cast"]), 4)
 
+    def test_offline_screenplay_planner_does_not_need_a_server(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from screenplay import validate_screenplay
+        from screenplay_planner import plan_screenplay
+
+        screenplay = plan_screenplay("Детский мультфильм про слонёнка и трёх друзей", 90)
+        self.assertEqual(screenplay["target_duration_seconds"], 90)
+        self.assertEqual(sum(scene["duration_seconds"] for scene in screenplay["scenes"]), 90)
+        self.assertEqual(screenplay["generation"]["backend"], "built-in offline starter screenplay")
+        self.assertEqual(validate_screenplay(screenplay), [])
+
     def test_no_paid_api_key_dependency(self):
         source = (ROOT / "scripts" / "generate.py").read_text(encoding="utf-8").lower()
         self.assertNotIn("openai_api_key", source)
