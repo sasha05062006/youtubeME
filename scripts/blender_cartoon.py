@@ -98,7 +98,7 @@ def animal_kind(character):
     return "creature"
 
 
-def build_character(character, x, y, index, mats, frame_end):
+def build_character(character, x, y, index, mats, frame_end, action_text=""):
     kind = animal_kind(character)
     palette = {
         "elephant": ((0.40, 0.63, 0.78), (0.85, 0.67, 0.62)),
@@ -153,13 +153,30 @@ def build_character(character, x, y, index, mats, frame_end):
     for side in (-1, 1):
         parts.append(sphere(f"{character['id']}_arm_{side}", (x + side * 0.50, y - 0.05, 1.02), (0.13, 0.16, 0.30), body_mat))
     # A simple name plaque is omitted: the film should not look like a game UI.
+    action = action_text.lower()
+    walking = any(word in action for word in ("идут", "идёт", "идти", "отправ", "шага", "перех", "walk", "search"))
+    jumping = any(word in action for word in ("прыга", "прыгнул", "прыж", "jump", "перепрыг"))
+    celebrating = any(word in action for word in ("празд", "сме", "радост", "получилось", "ура", "celebrat", "laugh"))
     for obj in parts:
         base = obj.location.copy()
         obj.keyframe_insert(data_path="location", frame=1)
         obj.location.z += 0.06
+        if jumping:
+            obj.location.z += 0.20
+        if walking:
+            obj.location.x += 0.18
         obj.keyframe_insert(data_path="location", frame=max(2, frame_end // 2))
         obj.location = base
+        if walking:
+            obj.location.x += 0.18
         obj.keyframe_insert(data_path="location", frame=frame_end)
+        if celebrating and "_arm_" in obj.name:
+            base_rotation = obj.rotation_euler.copy()
+            obj.keyframe_insert(data_path="rotation_euler", frame=1)
+            obj.rotation_euler.x += 0.65
+            obj.keyframe_insert(data_path="rotation_euler", frame=max(2, frame_end // 2))
+            obj.rotation_euler = base_rotation
+            obj.keyframe_insert(data_path="rotation_euler", frame=frame_end)
     return parts
 
 
@@ -270,7 +287,12 @@ def render_screenplay(screenplay_path: Path, frames_root: Path):
                          (-1.45, 1.25), (0.0, 1.25), (1.45, 1.25)]
         for char_index, character in enumerate(cast):
             x, y = positions[char_index] if char_index < len(positions) else (0, 1.2)
-            build_character(character, x, y, char_index, mats, frame_end)
+            dialogue_text = " ".join(
+                line.get("text", "") for line in scene_data.get("dialogue", [])
+                if isinstance(line, dict)
+            )
+            action_text = str(scene_data.get("visual_action", "")) + " " + dialogue_text
+            build_character(character, x, y, char_index, mats, frame_end, action_text)
         for obj in bpy.context.scene.objects:
             if obj.animation_data and obj.animation_data.action:
                 for fcurve in obj.animation_data.action.fcurves:
