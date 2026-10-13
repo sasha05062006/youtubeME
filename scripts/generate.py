@@ -17,55 +17,15 @@ ROOT = Path(__file__).resolve().parents[1]
 SETTINGS_PATH = ROOT / "config" / "settings.json"
 
 STORIES = [
-    {
-        "id": "robot_and_the_star",
-        "title": "THE LITTLE ROBOT",
-        "caption": "One small act can light up a whole world.",
-        "narration": "A little robot found a lonely star. Instead of keeping its light, the robot helped it find its way home.",
-        "prop": "star",
-        "accent": [0.12, 0.72, 1.0, 1.0],
-    },
-    {
-        "id": "moon_garden",
-        "title": "A GARDEN ON THE MOON",
-        "caption": "Give tiny things a chance to grow.",
-        "narration": "On a quiet moon, a tiny robot planted one seed. By morning, a glowing flower had made the whole crater feel like home.",
-        "prop": "flower",
-        "accent": [0.35, 1.0, 0.52, 1.0],
-    },
-    {
-        "id": "lost_comet",
-        "title": "THE LOST COMET",
-        "caption": "Sometimes the way home starts with a friend.",
-        "narration": "A young comet lost its path among the stars. A curious robot showed it the brightest constellation, and together they raced home.",
-        "prop": "crystal",
-        "accent": [1.0, 0.42, 0.25, 1.0],
-    },
-    {
-        "id": "brave_bubble",
-        "title": "THE BRAVEST BUBBLE",
-        "caption": "Being small does not mean being weak.",
-        "narration": "A tiny bubble was afraid of the giant ocean. It took one brave leap, met a friendly fish, and discovered a whole new world.",
-        "prop": "bubble",
-        "accent": [0.2, 0.85, 1.0, 1.0],
-    },
-    {
-        "id": "cosmic_cat",
-        "title": "THE COSMIC CAT",
-        "caption": "Curiosity can take you anywhere.",
-        "narration": "A space cat chased a floating light across the galaxy. The light was a lost planet beacon, and one playful paw saved an entire crew.",
-        "prop": "orb",
-        "accent": [0.9, 0.35, 1.0, 1.0],
-    },
-    {
-        "id": "tiny_mountain",
-        "title": "THE TINIEST CLIMBER",
-        "caption": "Progress is still progress, one step at a time.",
-        "narration": "A tiny robot wanted to climb the tallest mountain. It slipped, tried again, and learned that courage is simply taking the next step.",
-        "prop": "crystal",
-        "accent": [1.0, 0.68, 0.18, 1.0],
-    },
+    {"id":"robot_and_the_star","topic":"Космос и дружба","title":"МАЛЕНЬКИЙ РОБОТ И ЗВЕЗДА","caption":"Даже маленький поступок может изменить целый мир","narration":"В глубине космоса маленький робот встретил одинокую звезду. Он мог забрать её свет себе, но вместо этого помог ей найти дорогу домой. И тогда вся галактика стала чуточку ярче.","prop":"star","accent":[0.12,0.72,1.0,1.0]},
+    {"id":"moon_garden","topic":"Волшебство и чудеса","title":"САД НА ЛУНЕ","caption":"Большие чудеса начинаются с маленького семени","narration":"На тихой стороне Луны маленький робот посадил последнее семечко. Все говорили, что здесь ничего не вырастет. Но на рассвете появился светящийся цветок, и холодный кратер превратился в самый уютный сад во Вселенной.","prop":"flower","accent":[0.35,1.0,0.52,1.0]},
+    {"id":"lost_comet","topic":"Приключения","title":"ПОТЕРЯВШАЯСЯ КОМЕТА","caption":"Иногда дорогу домой помогает найти друг","narration":"Маленькая комета потеряла путь среди бесконечных звёзд. Она уже решила, что никогда не найдёт дом, но любопытный робот показал ей созвездие. Вместе они пронеслись по галактике и успели вернуться к самому красивому рассвету.","prop":"crystal","accent":[1.0,0.42,0.25,1.0]},
+    {"id":"brave_bubble","topic":"Добрые истории","title":"САМОЕ СМЕЛОЕ ПУЗЫРЬКО","caption":"Быть маленьким — не значит быть слабым","narration":"Крошечный пузырёк боялся огромного океана. Волны казались ему целыми горами. Но однажды он набрался смелости и прыгнул в воду. Там его встретила добрая рыбка, и пузырёк понял: за страхом может скрываться целый удивительный мир.","prop":"bubble","accent":[0.2,0.85,1.0,1.0]},
+    {"id":"cosmic_cat","topic":"Животные и юмор","title":"КОСМИЧЕСКИЙ КОТ","caption":"Любопытство может привести куда угодно","narration":"Космический кот гонялся за загадочным огоньком прямо по галактике. Он думал, что это обычная игрушка. Но огонёк оказался маяком потерявшегося корабля. Один прыжок, один счастливый хвост — и целая команда нашла дорогу домой.","prop":"orb","accent":[0.9,0.35,1.0,1.0]},
+    {"id":"tiny_mountain","topic":"Мотивация","title":"САМЫЙ МАЛЕНЬКИЙ АЛЬПИНИСТ","caption":"Главное — сделать следующий шаг","narration":"Маленький робот мечтал взобраться на самую высокую гору. Он падал, скользил и снова начинал путь. Когда он наконец добрался до вершины, то понял: смелость — это не отсутствие страха. Это решение попробовать ещё раз.","prop":"crystal","accent":[1.0,0.68,0.18,1.0]}
 ]
+CHARACTERS = {"robot":"Робот","cat":"Кот","astronaut":"Космонавт","dragon":"Дракон"}
+VOICES = {"irina":"Piper — женский голос Ирина","denis":"Piper — мужской голос Денис","windows":"Русский голос Windows","silent":"Без озвучки"}
 
 
 def load_settings() -> dict:
