@@ -210,6 +210,34 @@ def build_scene(settings, story, frames_dir):
     eye_r = uv_sphere("Right eye", (0.18, -0.40, 1.92), (0.07, 0.035, 0.09), eye, 12, 8)
     antenna = cylinder_between("Antenna", (0, 0, 2.20), (0, 0, 2.47), 0.035, shell)
     antenna_tip = uv_sphere("Antenna light", (0, 0, 2.50), (0.09, 0.09, 0.09), glow, 12, 8)
+    # Character variants share a simple stylized body but have distinct 3D accessories.
+    character = story.get("character", "robot")
+    if character == "cat":
+        for side in (-1, 1):
+            bpy.ops.mesh.primitive_cone_add(vertices=8, radius1=0.16, radius2=0.015, depth=0.34, location=(side * 0.27, 0, 2.39))
+            ear = bpy.context.object
+            ear.name = "Cat ear"
+            assign(ear, shell)
+        for side in (-1, 1):
+            cylinder_between("Cat whisker", (side * 0.18, -0.40, 1.79), (side * 0.42, -0.40, 1.77), 0.012, light_shell, 6)
+    elif character == "astronaut":
+        uv_sphere("Astronaut helmet", (0, 0.01, 1.91), (0.58, 0.46, 0.52), shell, 16, 10)
+        visor_mat = material("Visor blue tint", (0.08, 0.45, 0.72, 1), metallic=0.6, roughness=0.16, emission=0.15)
+        cube("Astronaut visor", (0, -0.43, 1.92), (0.62, 0.07, 0.28), visor_mat, 0.09)
+    elif character == "dragon":
+        for side in (-1, 1):
+            bpy.ops.mesh.primitive_cone_add(vertices=8, radius1=0.12, radius2=0.01, depth=0.38, location=(side * 0.28, 0, 2.36))
+            horn = bpy.context.object
+            horn.name = "Dragon horn"
+            horn.rotation_euler[1] = side * -0.22
+            assign(horn, glow)
+        for side in (-1, 1):
+            wing_mesh = bpy.data.meshes.new("Dragon wing mesh")
+            wing_mesh.from_pydata([(side * 0.42, 0.16, 1.45), (side * 0.92, 0.20, 1.92), (side * 0.83, 0.16, 1.24)], [], [(0, 1, 2)])
+            wing_mesh.update()
+            wing = bpy.data.objects.new("Small dragon wing", wing_mesh)
+            bpy.context.collection.objects.link(wing)
+            assign(wing, glow)
 
     arm_l = cylinder_between("Left upper arm", (-0.48, 0, 1.38), (-0.72, 0, 1.05), 0.095, shell)
     arm_r = cylinder_between("Right upper arm", (0.48, 0, 1.38), (0.72, 0, 1.05), 0.095, shell)
