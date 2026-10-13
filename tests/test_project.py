@@ -49,7 +49,7 @@ class ProjectConfigurationTests(unittest.TestCase):
                     "location": "Лес",
                     "visual_action": "Друзья ищут колокольчик",
                     "camera": "Средний план",
-                    "dialogue": [{"character_id": "elephant", "text": "Вы слышали звон?"}],
+                    "dialogue": [{"character_id": "elephant", "text": "Вы слышали звон?", "at_seconds": 3}],
                     "sound_effects": [{"asset": "bell", "at_seconds": 7.5}],
                 }
             ],
@@ -60,6 +60,26 @@ class ProjectConfigurationTests(unittest.TestCase):
         errors = validate_screenplay(valid)
         self.assertTrue(any("unknown character_id" in error for error in errors))
         self.assertTrue(any("within the scene duration" in error for error in errors))
+
+    def test_audio_timeline_offsets_scenes_and_sound_cues(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from audio_timeline import build_audio_events
+
+        screenplay = {
+            "scenes": [
+                {"duration_seconds": 10, "dialogue": [{"character_id": "elephant", "text": "Привет", "at_seconds": 2}],
+                 "sound_effects": [{"asset": "bell", "at_seconds": 4}]},
+                {"duration_seconds": 20, "dialogue": [{"character_id": "fox", "text": "Пойдём", "at_seconds": 1}],
+                 "ambience": [{"asset": "forest", "start_seconds": 0}]},
+            ]
+        }
+        events = build_audio_events(screenplay)
+        offsets = {(event["kind"], event.get("character_id") or event.get("asset")): event["start_seconds"] for event in events}
+        self.assertEqual(offsets[("dialogue", "elephant")], 2)
+        self.assertEqual(offsets[("sound_effect", "bell")], 4)
+        self.assertEqual(offsets[("dialogue", "fox")], 11)
+        self.assertEqual(offsets[("ambience", "forest")], 10)
 
     def test_no_paid_api_key_dependency(self):
         source = (ROOT / "scripts" / "generate.py").read_text(encoding="utf-8").lower()
