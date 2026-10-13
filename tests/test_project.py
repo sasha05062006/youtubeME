@@ -20,6 +20,15 @@ class ProjectConfigurationTests(unittest.TestCase):
         self.assertIn("primitive_uv_sphere_add", source)
         self.assertIn("bpy.ops.object.camera_add", source)
 
+    def test_russian_story_and_character_options_exist(self):
+        source = (ROOT / "scripts" / "generate.py").read_text(encoding="utf-8")
+        scene = (ROOT / "scripts" / "blender_scene.py").read_text(encoding="utf-8")
+        self.assertIn("Космос и дружба", source)
+        self.assertIn("Piper", source)
+        self.assertIn('"cat"', source)
+        self.assertIn('character == "astronaut"', scene)
+        self.assertIn('character == "dragon"', scene)
+
     def test_no_paid_api_key_dependency(self):
         source = (ROOT / "scripts" / "generate.py").read_text(encoding="utf-8").lower()
         self.assertNotIn("openai_api_key", source)
