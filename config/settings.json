@@ -1,0 +1,33 @@
+{
+  "video": {
+    "duration_seconds": 12,
+    "language": "en",
+    "fps": 12,
+    "seed": 0
+  },
+  "render": {
+    "width": 360,
+    "height": 640,
+    "engine": "BLENDER_EEVEE_NEXT",
+    "samples": 8
+  },
+  "audio": {
+    "enabled": true,
+    "windows_speech": true,
+    "piper_executable": "",
+    "piper_model": "",
+    "target_lufs": -16,
+    "true_peak_db": -1.5
+  },
+  "qa": {
+    "enabled": true,
+    "min_file_size_bytes": 20000,
+    "duration_tolerance_seconds": 2.0,
+    "require_vertical_video": true,
+    "require_manifest": true,
+    "max_volume_db": -0.1
+  },
+  "publish": {
+    "enabled": false
+  }
+}
