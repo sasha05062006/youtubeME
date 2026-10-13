@@ -106,6 +106,44 @@ def validate_screenplay(data: dict[str, Any]) -> list[str]:
                 errors.append(f"{effect_prefix}.at_seconds must be numeric")
             elif at_seconds < 0 or at_seconds > duration:
                 errors.append(f"{effect_prefix}.at_seconds must be within the scene duration")
+            gain = effect.get("gain_db", -8)
+            if not isinstance(gain, (int, float)) or isinstance(gain, bool):
+                errors.append(f"{effect_prefix}.gain_db must be numeric")
+
+        ambience = scene.get("ambience", [])
+        if not isinstance(ambience, list):
+            errors.append(f"{prefix}.ambience must be a list")
+            ambience = []
+        for ambience_index, cue in enumerate(ambience):
+            cue_prefix = f"{prefix}.ambience[{ambience_index}]"
+            if not isinstance(cue, dict):
+                errors.append(f"{cue_prefix} must be an object")
+                continue
+            if not isinstance(cue.get("asset"), str) or not cue["asset"].strip():
+                errors.append(f"{cue_prefix}.asset must be a non-empty string")
+            start = cue.get("start_seconds", 0)
+            if not isinstance(start, (int, float)) or isinstance(start, bool) or start < 0 or start > duration:
+                errors.append(f"{cue_prefix}.start_seconds must be within the scene duration")
+            cue_duration = cue.get("duration_seconds", duration)
+            if not isinstance(cue_duration, (int, float)) or isinstance(cue_duration, bool) or cue_duration <= 0:
+                errors.append(f"{cue_prefix}.duration_seconds must be positive")
+            gain = cue.get("gain_db", -22)
+            if not isinstance(gain, (int, float)) or isinstance(gain, bool):
+                errors.append(f"{cue_prefix}.gain_db must be numeric")
+
+        music = scene.get("music")
+        if music is not None:
+            if not isinstance(music, dict):
+                errors.append(f"{prefix}.music must be an object")
+            else:
+                if not isinstance(music.get("asset"), str) or not music["asset"].strip():
+                    errors.append(f"{prefix}.music.asset must be a non-empty string")
+                start = music.get("start_seconds", 0)
+                if not isinstance(start, (int, float)) or isinstance(start, bool) or start < 0 or start > duration:
+                    errors.append(f"{prefix}.music.start_seconds must be within the scene duration")
+                gain = music.get("gain_db", -25)
+                if not isinstance(gain, (int, float)) or isinstance(gain, bool):
+                    errors.append(f"{prefix}.music.gain_db must be numeric")
 
     if target and scenes:
         tolerance = max(5.0, float(target) * 0.05)
