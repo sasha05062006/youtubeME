@@ -141,7 +141,11 @@ def main() -> int:
     duration = args.duration
     if duration is None:
         answer = input("Длительность в секундах [180]: ").strip()
-        duration = int(answer) if answer else 180
+        try:
+            duration = int(answer) if answer else 180
+        except ValueError:
+            print("Укажи длительность целым числом секунд.", file=sys.stderr)
+            return 2
     if not prompt:
         print("Сначала нужно описать сюжет.", file=sys.stderr)
         return 2
