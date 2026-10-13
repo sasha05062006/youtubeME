@@ -76,8 +76,11 @@ def load_dotenv() -> None:
 
 
 def offline_narration(text: str, destination: Path, work_dir: Path, audio_cfg: dict) -> bool:
+    voice_name = str(audio_cfg.get("voice_name", "irina")).strip().lower()
     piper_executable = str(audio_cfg.get("piper_executable", "")).strip()
     piper_model = str(audio_cfg.get("piper_model", "")).strip()
+    if voice_name == "windows":
+        piper_model = ""
     piper_executable = os.environ.get("PIPER_EXE", piper_executable)
     piper_model = os.environ.get("PIPER_MODEL", piper_model)
     if piper_executable and piper_model:
@@ -228,7 +231,9 @@ def run_wizard(args):
     settings["audio"]["voice_name"] = args.voice
     if args.voice in ("irina", "denis"):
         model_name = "ru_RU-irina-medium.onnx" if args.voice == "irina" else "ru_RU-denis-medium.onnx"
-        settings["audio"]["piper_model"] = settings["audio"].get("piper_model") or str(ROOT / "models" / model_name)
+        settings["audio"]["piper_model"] = str(ROOT / "models" / model_name)
+    elif args.voice == "windows":
+        settings["audio"]["piper_model"] = ""
     SETTINGS_PATH.write_text(json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8")
     return args
 
