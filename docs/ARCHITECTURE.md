@@ -2,7 +2,20 @@
 
 ## Current implementation
 
-The repository currently implements an early procedural short pipeline:
+The repository has two paths: the original template-short pipeline and the newer prompt-driven cartoon pipeline launched by `create_cartoon.bat`. The newer path is integrated in code but has not yet been verified by rendering a full film on the target Windows laptop. It uses a local OpenAI-compatible model endpoint and does not call a paid remote API.
+
+### Prompt-driven path
+
+1. `scripts/screenplay_planner.py` turns a natural-language brief into a validated Russian screenplay with a cast, scene timings, dialogue, and sound cues.
+2. `scripts/blender_cartoon.py` builds and renders each scene separately, with simple primitive-based animal models and basic animation.
+3. `scripts/audio_timeline.py` generates line-level Piper dialogue, places CC0 sound assets on a shared timeline, ducks background sound under dialogue, and normalizes the mix.
+4. `scripts/create_cartoon.py` orchestrates planning, asset checks/download prompts, scene rendering, FFmpeg encoding/concatenation, audio mixing, final muxing, and a QA report.
+
+The procedural models are a low-resource foundation, not polished studio animation. Piper voice profiles use a small number of base voices plus modest pitch/tempo processing; this is not equivalent to natural human voice acting.
+
+### Original template-short path
+
+The original template pipeline:
 
 1. **Template story selector** chooses one of a small set of bundled Russian micro-stories. It does not yet turn an arbitrary user brief into a screenplay.
 2. **3D scene builder** invokes Blender in background mode and builds a single stylized character, props, lighting, camera, and simple keyframes from Python.
