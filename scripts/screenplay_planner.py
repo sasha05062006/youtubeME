@@ -109,6 +109,7 @@ def plan_screenplay(
     base_url: str = DEFAULT_BASE_URL,
     model: str | None = None,
     timeout: int = 180,
+    use_llm: bool = False,
 ) -> dict[str, Any]:
     if not brief.strip():
         raise PlannerError("Describe the cartoon first.")
@@ -116,18 +117,27 @@ def plan_screenplay(
         raise PlannerError("Duration must be between 15 and 1800 seconds.")
     base = base_url.rstrip("/")
     selected_model = model
+    from screenplay import validate_screenplay
+
+    # The project must remain usable on a clean install without a separately
+    # installed local LLM. Use the optional server only when explicitly requested.
+    if not use_llm:
+        screenplay = build_offline_screenplay(brief, duration)
+        errors = validate_screenplay(screenplay)
+        if errors:
+            raise PlannerError("Built-in offline screenplay failed validation: " + "; ".join(errors))
+        return screenplay
+
     if not selected_model:
         models_response = http_json(f"{base}/models", timeout=min(timeout, 30))
         items = models_response.get("data", [])
         if not isinstance(items, list) or not items:
             raise PlannerError(
-                "The local endpoint did not list any models. Start a model in the server or pass --model."
+                "The optional local endpoint did not list any models. Start a model in the server or omit --use-llm."
             )
         selected_model = str(items[0].get("id", "")).strip()
         if not selected_model:
             raise PlannerError("The first model returned by /models has no id; pass --model explicitly.")
-
-    from screenplay import validate_screenplay
 
     previous_errors: list[str] = []
     for attempt in range(2):
@@ -197,10 +207,11 @@ def main() -> int:
     parser.add_argument("--base-url", default=os.environ.get("YOUTUBEME_LLM_BASE_URL", DEFAULT_BASE_URL))
     parser.add_argument("--model", default=os.environ.get("YOUTUBEME_LLM_MODEL"))
     parser.add_argument("--timeout", type=int, default=180)
+    parser.add_argument("--use-llm", action="store_true", help="Use an already-running optional OpenAI-compatible local model server.")
     parser.add_argument("--output", type=Path, default=ROOT / "output" / "screenplay.json")
     args = parser.parse_args()
     try:
-        screenplay = plan_screenplay(args.prompt, args.duration, args.base_url, args.model, args.timeout)
+        screenplay = plan_screenplay(args.prompt, args.duration, args.base_url, args.model, args.timeout, args.use_llm)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(screenplay, ensure_ascii=False, indent=2), encoding="utf-8")
     except (PlannerError, OSError, ValueError, TypeError) as exc:
@@ -210,6 +221,7 @@ def main() -> int:
     print(f"Title: {screenplay['title']}")
     print(f"Duration: {screenplay['target_duration_seconds']} seconds")
     print(f"Cast: {len(screenplay['cast'])}; scenes: {len(screenplay['scenes'])}")
+    print(f"Planner: {screenplay.get('generation', {}).get('backend', 'unknown')}")
     return 0
 
 
