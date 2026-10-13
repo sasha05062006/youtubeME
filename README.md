@@ -14,14 +14,15 @@ A free, local-first Windows pipeline for generating original vertical 3D cartoon
 
 1. If Blender or FFmpeg are missing, run `install_tools.bat` once (uses Windows Package Manager and needs internet), or install them manually from https://www.blender.org/download/ and https://ffmpeg.org/download.html.
 2. Close and reopen the terminal after installation so PATH refreshes; if needed, set `BLENDER_EXE`, `FFMPEG_EXE`, and `FFPROBE_EXE` in a `.env` file.
-3. Run `setup.bat` once, then `run.bat`.
-4. Finished MP4s appear in `output/ready/`; failed QA runs are moved to `output/quarantine/` with a report.
+3. Run `install_russian_voice.bat` once for the offline Russian Irina/Ruslan voices (optional, downloads about 126 MB of voice models), then run `setup.bat` once.
+4. Run `run.bat` and choose a topic/story, character, voice, and duration.
+5. Finished MP4s appear in `output/ready/`; failed QA runs are moved to `output/quarantine/` with a report.
 
 The setup script checks prerequisites and never installs paid tools. For better Russian narration, run `install_russian_voice.bat` once to download Piper and the optional Irina/Ruslan voice models; this needs internet for the download, but narration itself runs locally afterward. The voice models and engine have their own licenses, so review them before commercial use. If Piper is unavailable, the app attempts an installed Russian Windows speech voice.
 
 ## Current MVP behavior
 
-- Opens a menu to choose a Russian story/topic, character, and voice.
+- Opens a menu to choose a Russian story/topic, character, voice, and duration.
 - Includes original Russian micro-stories and narration text.
 - Supports robot, cat, astronaut, and dragon character variants.
 - Builds and animates a low-poly 3D character, environment, props, lighting, and camera.
