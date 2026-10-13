@@ -163,7 +163,9 @@ def build_scene(settings, story, frames_dir):
     scene.render.use_overwrite = True
     scene.render.use_placeholder = False
     scene.view_settings.view_transform = "Standard"
-    scene.view_settings.look = "Medium High Contrast" if "Medium High Contrast" in scene.view_settings.bl_rna.properties["look"].enum_items.keys() else "Medium High Contrast"
+    available_looks = [item.identifier for item in scene.view_settings.bl_rna.properties["look"].enum_items]
+    if "Medium High Contrast" in available_looks:
+        scene.view_settings.look = "Medium High Contrast"
     try:
         scene.eevee.taa_render_samples = int(settings["render"].get("samples", 8))
     except Exception:
