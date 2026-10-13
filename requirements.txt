@@ -1,0 +1,2 @@
+# Core pipeline uses Python standard library only.
+# Blender and FFmpeg are separate free applications.
