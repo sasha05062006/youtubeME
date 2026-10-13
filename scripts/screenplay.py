@@ -124,7 +124,8 @@ def validate_screenplay(data: dict[str, Any]) -> list[str]:
             start = cue.get("start_seconds", 0)
             if not isinstance(start, (int, float)) or isinstance(start, bool) or start < 0 or start > duration:
                 errors.append(f"{cue_prefix}.start_seconds must be within the scene duration")
-            cue_duration = cue.get("duration_seconds", duration)
+            default_cue_duration = max(0.0, float(duration) - float(start)) if isinstance(start, (int, float)) and not isinstance(start, bool) else 0
+            cue_duration = cue.get("duration_seconds", default_cue_duration)
             if not isinstance(cue_duration, (int, float)) or isinstance(cue_duration, bool) or cue_duration <= 0:
                 errors.append(f"{cue_prefix}.duration_seconds must be positive")
             elif isinstance(start, (int, float)) and not isinstance(start, bool) and start >= 0 and start + cue_duration > duration:
