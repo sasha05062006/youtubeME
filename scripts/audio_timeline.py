@@ -93,6 +93,61 @@ def _run(command: list[str], timeout: int = 180, input_text: str | None = None) 
         raise AudioTimelineError(f"Could not run {command[0]}: {exc}") from exc
 
 
+
+def build_filter_graph(clips: list[dict[str, Any]], duration: float) -> str:
+    """Build a timeline mix that automatically lowers ambience/music under dialogue."""
+    filters: list[str] = []
+    voice_labels: list[str] = []
+    background_labels: list[str] = []
+    for index, clip in enumerate(clips):
+        label = f"a{index}"
+        delay_ms = max(0, int(round(float(clip["start_seconds"]) * 1000)))
+        gain_db = float(clip.get("gain_db", 0))
+        filters.append(
+            f"[{index}:a]aresample=44100,volume={gain_db}dB,"
+            f"adelay={delay_ms}|{delay_ms},atrim=duration={duration},"
+            f"asetpts=PTS-STARTPTS[{label}]"
+        )
+        if clip["kind"] == "dialogue":
+            voice_labels.append(f"[{label}]")
+        else:
+            background_labels.append(f"[{label}]")
+
+    if voice_labels:
+        if len(voice_labels) == 1:
+            filters.append(f"{voice_labels[0]}anull[voicebus]")
+        else:
+            filters.append(
+                "".join(voice_labels) +
+                f"amix=inputs={len(voice_labels)}:duration=longest:dropout_transition=0[voicebus]"
+            )
+    if background_labels:
+        if len(background_labels) == 1:
+            filters.append(f"{background_labels[0]}anull[bgbus]")
+        else:
+            filters.append(
+                "".join(background_labels) +
+                f"amix=inputs={len(background_labels)}:duration=longest:dropout_transition=1[bgbus]"
+            )
+
+    if voice_labels and background_labels:
+        filters.append(
+            "[bgbus][voicebus]sidechaincompress=threshold=0.025:ratio=7:"
+            "attack=20:release=450:makeup=1[ducked]"
+        )
+        filters.append(
+            f"[voicebus][ducked]amix=inputs=2:duration=longest:dropout_transition=1,"
+            f"atrim=duration={duration},loudnorm=I=-16:TP=-1.5:LRA=11[out]"
+        )
+    else:
+        final_label = "voicebus" if voice_labels else "bgbus"
+        filters.append(
+            f"[{final_label}]atrim=duration={duration},"
+            f"loudnorm=I=-16:TP=-1.5:LRA=11[out]"
+        )
+    return ";".join(filters)
+
+
 def render_audio_timeline(
     screenplay: dict[str, Any],
     ffmpeg: str,
@@ -193,26 +248,9 @@ def render_audio_timeline(
             command.extend(["-stream_loop", "-1"])
         command.extend(["-i", str(clip["path"])])
 
-    filters: list[str] = []
-    labels: list[str] = []
-    for index, clip in enumerate(clips):
-        label = f"a{index}"
-        delay_ms = max(0, int(round(float(clip["start_seconds"]) * 1000)))
-        gain_db = float(clip.get("gain_db", 0))
-        filters.append(
-            f"[{index}:a]aresample=44100,volume={gain_db}dB,"
-            f"adelay={delay_ms}|{delay_ms},atrim=duration={duration},"
-            f"asetpts=PTS-STARTPTS[{label}]"
-        )
-        labels.append(f"[{label}]")
-
-    filters.append(
-        "".join(labels) +
-        f"amix=inputs={len(labels)}:duration=longest:dropout_transition=2,"
-        f"atrim=duration={duration},loudnorm=I=-16:TP=-1.5:LRA=11[out]"
-    )
+    filter_graph = build_filter_graph(clips, duration)
     command.extend([
-        "-filter_complex", ";".join(filters),
+        "-filter_complex", filter_graph,
         "-map", "[out]", "-t", str(duration),
         "-c:a", "aac", "-b:a", "160k", "-ar", "44100",
         str(output_path),
