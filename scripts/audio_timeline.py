@@ -86,9 +86,9 @@ def _resolve_asset(asset_root: Path, kind: str, name: str) -> Path:
     raise AudioTimelineError(f"Missing {kind} asset {name!r}; expected one of: {tried}")
 
 
-def _run(command: list[str], timeout: int = 180) -> subprocess.CompletedProcess:
+def _run(command: list[str], timeout: int = 180, input_text: str | None = None) -> subprocess.CompletedProcess:
     try:
-        return subprocess.run(command, capture_output=True, text=True, timeout=timeout, check=False)
+        return subprocess.run(command, input=input_text, capture_output=True, text=True, timeout=timeout, check=False)
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise AudioTimelineError(f"Could not run {command[0]}: {exc}") from exc
 
@@ -136,15 +136,11 @@ def render_audio_timeline(
             clip_path = work_dir / f"dialogue_{index:04d}_{event['character_id']}.wav"
             result = _run([
                 piper, "--model", str(model_path), "--output_file", str(clip_path)
-            ], timeout=300)
-            # Piper reads the text from stdin; keep dialogue out of command-line arguments.
+            ], timeout=300, input_text=event["text"])
             if result.returncode != 0:
                 raise AudioTimelineError(
                     f"Piper failed for {character['name']}: {result.stderr[-1200:]}"
                 )
-            # A second invocation with stdin is done below only if the first invocation
-            # was compatible with the executable. The first invocation has no input,
-            # so treat an empty clip as a hard error rather than silently faking speech.
             if not clip_path.exists() or clip_path.stat().st_size <= 44:
                 raise AudioTimelineError(
                     f"Piper returned no speech for {character['name']}. "
