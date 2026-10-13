@@ -34,11 +34,13 @@ The main remaining work is to improve the visual acting/rigs, evaluate higher-qu
 1. Run `install_tools.bat` if Blender and FFmpeg are not installed; reopen the terminal after installation.
 2. Run `setup.bat` once.
 3. Run `install_russian_voice.bat` once to install Piper and the two Russian voice models.
-4. Start your local OpenAI-compatible language-model server at `http://127.0.0.1:31415/v1` (or set `YOUTUBEME_LLM_BASE_URL`).
-5. Run `create_cartoon.bat`, describe the story, and enter the duration in seconds. If the starter sound pack is missing, the program offers to download the CC0 assets.
+4. Run `create_cartoon.bat`, describe the story, and enter the duration in seconds. A separate language-model server is **not required** for the built-in offline starter screenplay.
+5. If the starter sound pack is missing, the program offers to download the free CC0 assets.
 6. Find the MP4 and JSON report in `output/ready/`; failed quality checks go to `output/quarantine/`.
 
-The one-click flow is integrated in the repository, but must still be tested end-to-end on the target laptop. It relies on a compatible local model server being active and on the installed Blender/FFmpeg/Piper tools.
+**Offline-planner limitation:** without an LLM, the project uses the included elephant-friends screenplay as a retimed starter template; it changes the title based on your brief, but does not fully invent a different plot. An optional already-running local OpenAI-compatible server can be enabled explicitly with `--use-llm` when calling `scripts/screenplay_planner.py`. It is not installed automatically and is not needed for the default launch.
+
+The one-click flow is integrated in the repository, but must still be tested end-to-end on the target laptop. Blender/FFmpeg/Piper still need to be installed, and a three-minute render may be very slow on a 4 GB RAM / Celeron-class laptop.
 
 ## Windows quick start for the existing prototype
 
@@ -48,7 +50,7 @@ The one-click flow is integrated in the repository, but must still be tested end
 4. Run `run.bat` to generate one of the currently bundled template shorts.
 5. Check `output/ready/` and the accompanying manifest. Failed QA outputs go to `output/quarantine/`.
 
-To create a screenplay from a natural-language brief through a **local OpenAI-compatible model endpoint**, run `python scripts/screenplay_planner.py --prompt "Детский мультфильм про слонёнка и трёх друзей, которые ищут волшебный колокольчик" --duration 180 --output output\screenplay.json`. By default it checks `http://127.0.0.1:31415/v1`; override with `--base-url` or `YOUTUBEME_LLM_BASE_URL`; set `YOUTUBEME_LLM_MODEL` if model discovery is unavailable. This does not call a paid API. It requires a compatible local model server to be running.
+To create a screenplay from a brief using the built-in offline starter template, run `python scripts/screenplay_planner.py --prompt "Детский мультфильм про слонёнка и трёх друзей, которые ищут волшебный колокольчик" --duration 180 --output output\screenplay.json`. This default does not require a language-model server. To use an already-running optional local OpenAI-compatible endpoint, add `--use-llm` and optionally set `--base-url`, `YOUTUBEME_LLM_BASE_URL`, or `YOUTUBEME_LLM_MODEL`. No paid API is called.
 
 For an audio-only test, validate the included sample with `python scripts/screenplay.py examples/elephant_friends.screenplay.json`, then run `install_audio_assets.bat` and `python scripts/audio_timeline.py examples/elephant_friends.screenplay.json` after installing the Piper voice models. The one-click launcher invokes the screenplay planner, Blender renderer, audio mixer, and final video assembly automatically.
 
